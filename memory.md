@@ -21,7 +21,27 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
-_(尚未开始执行 plan）_
+## 2026-04-27 · Task 1.1 — Initialize backend project skeleton
+
+**Done**: 用 uv 初始化 `backend/` Python 项目骨架，搭起 FastAPI 应用 + `/health` endpoint + pytest 配置（含 `live` marker 跳过实 API 调用）。
+
+**Files**:
+- New: `backend/pyproject.toml`, `backend/.python-version`, `backend/uv.lock`, `backend/src/mockinterview/{__init__,main,config}.py`, `backend/tests/{conftest,test_health}.py`
+
+**Decisions / gotchas**:
+- `uv init` 默认在 `backend/` 内嵌套创建 `backend/mockinterview/`（含 pyproject 和 src），需手动 flatten 一层后再覆盖 pyproject.toml。下次类似 task 注意。
+- 工具链：`brew install uv pnpm` 先安装（`uv` 0.11.7, `pnpm` 10.33.2）。Python 用 uv 装的 3.12.13（系统 Python 是 3.14，但 .python-version 把项目锁到 3.12）。
+- code reviewer 提了 3 条 Important 是 forward-looking 给后续 task 的预警，**不需要现在改**：
+  - `CORS_ORIGINS` env 解析（plan Task 4.7 会加 field_validator）
+  - `anthropic_api_key=""` 默认值（Task 1.4 接 API 时再处理）
+  - `claude_model="claude-opus-4-7"` 是 2026-04 当前 Opus 4.7 的合法 alias，无需改
+- `uv.lock` 已 commit（应用类项目应锁，库类项目应 ignore）
+
+**Verify**: `cd backend && uv run pytest tests/test_health.py` → `1 passed in 0.00s`
+
+**Commit**: `8d7fbbf`
+
+---
 
 ---
 
