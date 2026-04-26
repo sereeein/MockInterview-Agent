@@ -21,6 +21,30 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.5 — Resume parser (PDF → structured JSON)
+
+**Done**: 加 `agent/prompts/resume_parse.py`（中文 system prompt，4 字段 + 5 规则）、`schemas/resume.py`（5 个 Pydantic 模型，仅 4 类字段，显式排除证书/奖项/语言/兴趣）、`agent/resume_parser.py`（`extract_pdf_text` 用 pdfplumber，`parse_resume` 协调 PDF→文本→Claude→`ResumeStructured.model_validate`）。2 单测全 mock（monkeypatch 模块级 `extract_pdf_text` + patch 模块导入的 `call_json`）。
+
+**Files**:
+- New: `backend/src/mockinterview/{schemas/__init__,schemas/resume,agent/prompts/__init__,agent/prompts/resume_parse,agent/resume_parser}.py`, `backend/tests/test_resume_parser.py`
+
+**Decisions / gotchas**:
+- Pydantic v2 处理裸 `list = []` 默认值是安全的（每次实例化 deep-copy），所以 `Basic.education = []` 和其他用 `Field(default_factory=list)` 的混合写法都正确——保持与 plan verbatim 一致
+- `outcomes`/`role` 默认空字符串：spec §3 明确"不强制 outcomes，agent 出题时把缺 outcomes 当 feature"——保留
+- 测试 mock 策略：`monkeypatch.setattr(resume_parser, "extract_pdf_text", fake)` + `patch("...resume_parser.call_json", ...)`——前者改模块属性、后者改导入名，两者互不冲突
+- ⚠️ **Task 1.6 接 PDF HTTP endpoint 时一并修以下 robustness 项**（reviewer flag 的 minor，全部推迟到 1.6 boundary 处理）：
+  1. 把 pdfplumber 的 `PDFSyntaxError`/`PSException` 包成 `ResumeParseError`，HTTP 层返 400
+  2. `pdf_bytes==b""` 守卫（在 `extract_pdf_text` 顶部 `if not pdf_bytes: raise ValueError`）
+  3. image-only PDF 的友好提示（"PDF 看似扫描件，无法抽取文本，请粘贴文本"）
+  4. `.format(resume_text=text)` 改 `.replace("{resume_text}", text)` 或 `string.Template`，避免简历文本含 `{xxx}` 时炸 KeyError
+  5. 加上 Task 1.3 留的 api.ts FormData + ApiError 两个坑——一并 1.6 修
+
+**Verify**: `cd backend && uv run pytest tests/test_resume_parser.py -v` → `2 passed in 0.25s`
+
+**Commit**: `33b3044`
+
+---
+
 ## 2026-04-27 · Task 1.4 — Anthropic client wrapper with prompt caching
 
 **Done**: 写 `backend/src/mockinterview/agent/client.py`（45 行）：`get_client()` lru_cache 单例、`build_cached_system(parts)` 把字符串列表转成 system text block 数组并给最后一块加 `cache_control={"type":"ephemeral"}`、`parse_json_response(text)` 处理 ```json ``` 围栏或裸 JSON、`call_json(...)` 一站式调用 + 解析。3 单测全 mock，不打 API。
