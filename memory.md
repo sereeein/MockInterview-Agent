@@ -21,6 +21,24 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.7 — 5 Rubric YAML configs
+
+**Done**: 写 5 份 YAML（`backend/src/mockinterview/configs/rubrics/{t1_star,t2_quant,t3_jd_align,t4_structured,t5_motivation}.yaml`），每份含 category / name / 4 dimensions（key + label + description）/ score_levels（0-3）/ threshold_complete=9。`agent/rubrics.py` 12 行 loader：`load_rubric(category)` 带 lru_cache + `all_rubrics()` 返 5 份。2 测试全过。
+
+**Files**:
+- New: `backend/src/mockinterview/configs/rubrics/{t1_star,t2_quant,t3_jd_align,t4_structured,t5_motivation}.yaml`, `backend/src/mockinterview/agent/rubrics.py`, `backend/tests/test_rubrics.py`
+
+**Decisions / gotchas**:
+- `score_levels` 的 key 被 PyYAML 解析为 `int` 0-3（不是 str）——下游 prompt template 拼接时记得 key 类型
+- 5 套 rubric 的 dimension key 是 prompt 和 DrillAttempt.rubric_scores_json 的稳定标识符，**不能改**：T1: situation/task/action/result, T2: baseline/attribution/significance/business_meaning, T3: case_support/framework/feasibility/reflection, T4: dimensions/priority/edge_cases/falsifiable, T5: specificity/coherence/non_cliche/reflection
+- 跳过单独 subagent review（task 是纯 YAML + 12 行 loader）：自验通过 grep 确认 5 份文件 category/keys/threshold 全对，16/16 tests 全过
+
+**Verify**: `cd backend && uv run pytest tests/test_rubrics.py -v` → `2 passed in 0.01s`；全套 `16 passed`
+
+**Commit**: `38a8ceb`
+
+---
+
 ## 2026-04-27 · Task 1.6 — POST /resume + 5 deferred robustness fixes (2 commits)
 
 **Done**: 实现 `POST /resume` HTTP endpoint（multipart 上传 PDF + role_type + 可选 JD/公司），并清算 Task 1.3/1.5 累积的 5 个 robustness item。两个 commit 分前后端：
