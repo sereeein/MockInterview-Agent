@@ -21,6 +21,28 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.2 — Database models (4 tables) + session
+
+**Done**: 实现 spec §10 的 4 张 SQLModel 表（ResumeSession / Question / DrillAttempt / Report）+ 2 个枚举（QuestionStatus / ExitType），`db/session.py` 提供 engine + `init_db` + `get_session` 依赖；`main.py` 用 lifespan 模式在启动时建表。3 个 round-trip 测试 + 原有 health 测试共 4 passed。
+
+**Files**:
+- New: `backend/src/mockinterview/db/{__init__,models,session}.py`, `backend/tests/test_db_models.py`
+- Modified: `backend/src/mockinterview/main.py`（替换为 lifespan 模式）, `backend/tests/conftest.py`（fixture 改 context-manager 让 lifespan 跑起来）, `plans/2026-04-27-mock-interview-agent-v1.md`（Task 1.2 代码块更新为 timezone-aware datetime）
+
+**Decisions / gotchas**:
+- 5 个 `dict`/`list` JSON 列统一用 `sa_column=Column(JSON)`（跨 DB 可移植，未来切 Postgres 不用改）
+- 所有 FK + 高频筛选字段（user_id / role_type / status）都加了 index
+- Code reviewer 抓出 2 个 important 立刻修复（commit `e093c6b`）：
+  - I1: `datetime.utcnow()` 在 Python 3.12+ 已 deprecated，全部替换为 `datetime.now(timezone.utc)`，plan 文档也同步更新避免后续 task 复制粘贴时复活老用法
+  - M5: `conftest.py` 的 `client` fixture 原本用裸 `TestClient(app)`，FastAPI lifespan 不会触发；改成 `with TestClient(app) as c: yield c`，否则后续 DB 路由测试会报 "no such table"
+- 推迟项（reviewer 提到但不阻塞 Task 1.3）：共享 db_session fixture（I2）、把 mkdir 移进 init_db（I3）、给 total_score 加 0-12 范围约束（M2）、把 category/difficulty 改成 Enum（M3）
+
+**Verify**: `cd backend && uv run pytest -W error::DeprecationWarning -v` → `4 passed, 0 utcnow warnings`
+
+**Commits**: `4594dfc` (initial schema) → `e093c6b` (timezone + lifespan fix)
+
+---
+
 ## 2026-04-27 · Task 1.1 — Initialize backend project skeleton
 
 **Done**: 用 uv 初始化 `backend/` Python 项目骨架，搭起 FastAPI 应用 + `/health` endpoint + pytest 配置（含 `live` marker 跳过实 API 调用）。
