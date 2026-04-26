@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -84,7 +84,7 @@ def test_drill_attempt_persists_transcript_and_scores():
             followup_rounds=1,
             exemplar_answer="Sample answer",
             improvement_suggestions=["a", "b", "c"],
-            ended_at=datetime.utcnow(),
+            ended_at=datetime.now(timezone.utc),
         )
         s.add(d)
         s.commit()

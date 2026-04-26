@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -29,7 +29,7 @@ class ResumeSession(SQLModel, table=True):
     jd_text: str | None = None
     company_name: str | None = None
     role_type: str = Field(index=True)  # pm / data / ai / other
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     questions: list["Question"] = Relationship(back_populates="session")
     reports: list["Report"] = Relationship(back_populates="session")
@@ -46,7 +46,7 @@ class Question(SQLModel, table=True):
     status: QuestionStatus = Field(default=QuestionStatus.NOT_PRACTICED, index=True)
     best_score: int | None = None
     last_attempt_at: datetime | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     session: ResumeSession | None = Relationship(back_populates="questions")
     attempts: list["DrillAttempt"] = Relationship(back_populates="question")
@@ -65,7 +65,7 @@ class DrillAttempt(SQLModel, table=True):
     followup_rounds: int = 0
     exemplar_answer: str
     improvement_suggestions: list[str] = Field(sa_column=Column(JSON))
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     ended_at: datetime | None = None
 
     question: Question | None = Relationship(back_populates="attempts")
@@ -81,6 +81,6 @@ class Report(SQLModel, table=True):
     highlights: list[dict[str, Any]] = Field(sa_column=Column(JSON))
     weaknesses: list[dict[str, Any]] = Field(sa_column=Column(JSON))
     next_steps: list[str] = Field(sa_column=Column(JSON))
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     session: ResumeSession | None = Relationship(back_populates="reports")
