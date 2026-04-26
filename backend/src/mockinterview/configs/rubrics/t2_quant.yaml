@@ -1,0 +1,22 @@
+category: T2
+name: 量化严谨度
+description: outcomes 追问类，考察候选人对自己声称数字的严谨程度
+dimensions:
+  - key: baseline
+    label: Baseline 明确
+    description: 是否说清对照基线（同期/历史均值/未做该改动情况）
+  - key: attribution
+    label: 归因清晰
+    description: 把结果归因到自己的工作而非外部因素，能识别混淆变量
+  - key: significance
+    label: 显著性意识
+    description: 提及样本量、置信度、统计或业务显著性
+  - key: business_meaning
+    label: 业务意义
+    description: 数字翻译成业务影响（GMV、留存、决策）
+score_levels:
+  0: 完全缺失或答非所问
+  1: 提及但模糊、不可落地
+  2: 合格、可被理解
+  3: 出色、有洞察或量化支撑
+threshold_complete: 9

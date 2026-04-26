@@ -1,0 +1,22 @@
+category: T5
+name: 自洽 + 真诚
+description: 行为/动机题，考察自洽与真实度
+dimensions:
+  - key: specificity
+    label: 动机具体
+    description: 动机指向具体细节，不是宽泛形容词
+  - key: coherence
+    label: 与履历自洽
+    description: 与简历、过往选择一致，不矛盾
+  - key: non_cliche
+    label: 非套话
+    description: 不堆砌"成长机会、平台优秀"类模板
+  - key: reflection
+    label: 包含反思
+    description: 体现自我认知或复盘
+score_levels:
+  0: 完全缺失或答非所问
+  1: 提及但模糊、不可落地
+  2: 合格、可被理解
+  3: 出色、有洞察或量化支撑
+threshold_complete: 9

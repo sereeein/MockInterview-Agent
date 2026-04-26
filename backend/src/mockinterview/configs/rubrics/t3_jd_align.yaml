@@ -1,0 +1,22 @@
+category: T3
+name: STAR + 框架
+description: JD 能力对齐题，要求结合 STAR 案例与岗位框架化思考
+dimensions:
+  - key: case_support
+    label: 案例支撑
+    description: 用具体项目/经历做支撑，不空谈
+  - key: framework
+    label: 框架化思考
+    description: 拆解维度合理、用结构化语言表达
+  - key: feasibility
+    label: 落地可行性
+    description: 提到资源、时间、风险、依赖等约束
+  - key: reflection
+    label: 复盘视角
+    description: 提及"如果重做会改什么"、"局限是什么"
+score_levels:
+  0: 完全缺失或答非所问
+  1: 提及但模糊、不可落地
+  2: 合格、可被理解
+  3: 出色、有洞察或量化支撑
+threshold_complete: 9

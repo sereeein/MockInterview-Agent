@@ -1,0 +1,22 @@
+category: T4
+name: 结构化思考
+description: 岗位通用题（思路题、case 题），考察结构化拆解能力
+dimensions:
+  - key: dimensions
+    label: 拆解维度完整
+    description: 拆解角度覆盖关键维度，不遗漏大块
+  - key: priority
+    label: 优先级合理
+    description: 在多个维度间能给出优先级排序及理由
+  - key: edge_cases
+    label: 风险与边界
+    description: 主动提及边界、异常、风险、滥用
+  - key: falsifiable
+    label: 可证伪
+    description: 假设/结论可验证，给出验证方式
+score_levels:
+  0: 完全缺失或答非所问
+  1: 提及但模糊、不可落地
+  2: 合格、可被理解
+  3: 出色、有洞察或量化支撑
+threshold_complete: 9

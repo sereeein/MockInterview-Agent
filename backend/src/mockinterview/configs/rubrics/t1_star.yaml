@@ -1,0 +1,22 @@
+category: T1
+name: STAR
+description: 项目深挖类题目，按 STAR 框架评估完整度
+dimensions:
+  - key: situation
+    label: Situation 情境
+    description: 是否清晰交代项目背景、约束、问题来源
+  - key: task
+    label: Task 任务目标
+    description: 是否明确具体目标、交付物、成功标准
+  - key: action
+    label: Action 行动
+    description: 候选人具体做了什么、为什么这么做、考虑了哪些 trade-off
+  - key: result
+    label: Result 结果
+    description: 量化结果、归因清晰度、复盘视角
+score_levels:
+  0: 完全缺失或答非所问
+  1: 提及但模糊、不可落地
+  2: 合格、可被理解
+  3: 出色、有洞察或量化支撑
+threshold_complete: 9
