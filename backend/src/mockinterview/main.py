@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from mockinterview.config import get_settings
 from mockinterview.db.session import init_db
+from mockinterview.routes import resume as resume_routes
 
 
 @asynccontextmanager
@@ -22,6 +23,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(resume_routes.router)
 
 
 @app.get("/health")

@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from mockinterview.agent import resume_parser
+from mockinterview.agent.resume_parser import ResumeParseError
 from mockinterview.schemas.resume import ResumeStructured
 
 
@@ -46,5 +47,10 @@ def test_parse_resume_returns_structured(monkeypatch):
 
 def test_parse_resume_empty_text_raises(monkeypatch):
     monkeypatch.setattr(resume_parser, "extract_pdf_text", lambda _: "")
-    with pytest.raises(ValueError, match="empty"):
+    with pytest.raises(ResumeParseError, match="扫描件"):
         resume_parser.parse_resume(b"PDFBYTES")
+
+
+def test_extract_pdf_text_empty_bytes_raises():
+    with pytest.raises(ResumeParseError, match="为空"):
+        resume_parser.extract_pdf_text(b"")
