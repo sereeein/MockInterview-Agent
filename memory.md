@@ -21,6 +21,37 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.6 — POST /resume + 5 deferred robustness fixes (2 commits)
+
+**Done**: 实现 `POST /resume` HTTP endpoint（multipart 上传 PDF + role_type + 可选 JD/公司），并清算 Task 1.3/1.5 累积的 5 个 robustness item。两个 commit 分前后端：
+
+**Commit A (`f8c18f1`) — 后端**：
+- `resume_parser.py` 重写：定义 `ResumeParseError` 自定义异常、`extract_pdf_text` 加 empty-bytes guard 并把 pdfplumber 异常包成 `ResumeParseError`、image-only PDF 给"看似扫描件"友好提示、user template 用 `.replace("{resume_text}", text)` 取代 `.format`（避免简历含 `{xxx}` 时炸 KeyError）
+- 新 `routes/resume.py`：分别 400 处理 invalid role / empty file / `ResumeParseError`，成功返 200 + 5 字段
+- `main.py` 注册 router；4 个新 route 测试 + 1 个新 empty-bytes 测试 + 1 个更新过的 empty-text 测试
+
+**Commit B (`f611300`) — 前端**：
+- `api.ts` 重写：`ApiError extends Error` 带 `status` + `body` 字段、`isJsonBody` 判别函数（FormData/Blob/URLSearchParams/ArrayBuffer 不注入 `Content-Type`）、非 2xx 时先 JSON 解析失败再 fallback text、抛 `ApiError`
+
+**Files**:
+- Modified: `backend/src/mockinterview/{agent/resume_parser,main}.py`, `backend/tests/test_resume_parser.py`, `frontend/src/lib/api.ts`
+- New: `backend/src/mockinterview/routes/{__init__,resume}.py`, `backend/tests/test_routes_resume.py`
+
+**Decisions / gotchas**:
+- `extract_pdf_text` 用宽 `except Exception`：pdfplumber 没有公开异常层级（混用 `PSEOF`/`PDFSyntaxError`/通用 Exception），宽 catch 是当前最佳实践。未来加日志时记录原始 type
+- 路由是 sync `def`（不是 `async def`），所以 `file.file.read()` 是 sync 读——FastAPI 会在 threadpool 跑 sync handler，event loop 不会被阻塞。如未来 handler 加 I/O，再统一切 async + `await file.read()`
+- `get_settings()` 在 route body 里直接调（不走 `Depends(get_settings)`）：`lru_cache` 让两者等价，但走 Depends 在测试 override 上更优——目前测试 mock 的是 `parse_resume`，影响有限，**Phase 1 收尾时若有时间可重构**
+- `api.ts` 的 `isJsonBody` 对纯字符串 body 默认返 `true`（约定"字符串 body = JSON"）——若未来传 form-encoded 字符串需调用方显式覆盖 `Content-Type`，加 JSDoc 说明（**这条记下来，Task 1.7+ 任意时机加 1 行注释即可**）
+- ⚠️ 上述两个 followup 体量都是 1 行注释级，不开新 task，等下一次 touch 这两个文件时顺手加
+
+**Verify**:
+- `cd backend && uv run pytest -v` → `14 passed in 0.04s`
+- `cd frontend && pnpm build` → `Compiled successfully in 1002ms`
+
+**Commits**: `f8c18f1` (backend), `f611300` (frontend)
+
+---
+
 ## 2026-04-27 · Task 1.5 — Resume parser (PDF → structured JSON)
 
 **Done**: 加 `agent/prompts/resume_parse.py`（中文 system prompt，4 字段 + 5 规则）、`schemas/resume.py`（5 个 Pydantic 模型，仅 4 类字段，显式排除证书/奖项/语言/兴趣）、`agent/resume_parser.py`（`extract_pdf_text` 用 pdfplumber，`parse_resume` 协调 PDF→文本→Claude→`ResumeStructured.model_validate`）。2 单测全 mock（monkeypatch 模块级 `extract_pdf_text` + patch 模块导入的 `call_json`）。
