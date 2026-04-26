@@ -21,6 +21,28 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.4 — Anthropic client wrapper with prompt caching
+
+**Done**: 写 `backend/src/mockinterview/agent/client.py`（45 行）：`get_client()` lru_cache 单例、`build_cached_system(parts)` 把字符串列表转成 system text block 数组并给最后一块加 `cache_control={"type":"ephemeral"}`、`parse_json_response(text)` 处理 ```json ``` 围栏或裸 JSON、`call_json(...)` 一站式调用 + 解析。3 单测全 mock，不打 API。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/__init__.py`, `backend/src/mockinterview/agent/client.py`, `backend/tests/test_agent_client.py`
+
+**Decisions / gotchas**:
+- 验证 Anthropic SDK 0.97.0 的 `{"type":"ephemeral"}` cache_control 格式是当前正确格式（未来若调长 TTL 可加 `"ttl":"1h"`）
+- `b.text` 访问：SDK content 是 union（TextBlock/ThinkingBlock/ToolUseBlock），先用 `b.type=="text"` 过滤再取 `.text` 才安全——已实现
+- 已知小坑（暂不处理，影响小且后续 task 有自然修复）：
+  - `_JSON_FENCE.search` 返第一个 match——如果 model 输出"思考块 + 最终答案块"两个围栏，会取错的；rubric 类提示通常只一个围栏，先不动
+  - `get_client()` lru_cache 跨测试不重置——Task 1.5+ 用 mock 时通过 monkeypatch `call_json` 绕过，不需重置 client
+  - `call_json` 本身没单测——Task 1.5 起被 mock 调用，覆盖间接达成
+- code reviewer 误把 docstring 当 spec 偏差（review prompt 我截断了 spec，原 task 含 docstring）—— 无实际问题
+
+**Verify**: `cd backend && uv run pytest tests/test_agent_client.py -v` → `3 passed in 0.18s`
+
+**Commit**: `2cae489`
+
+---
+
 ## 2026-04-27 · Task 1.3 — Frontend skeleton (Next.js 16 + shadcn)
 
 **Done**: `pnpm dlx create-next-app` 起 `frontend/`（Next.js 16.2.4 + React 19.2.4 + TypeScript + Tailwind v4 + App Router + src dir + Turbopack + 无 ESLint + pnpm），shadcn init 后 add 9 个 UI 组件（button/card/input/textarea/label/badge/progress/tabs/dialog），首页换成项目占位文案，lib/api.ts 写了 fetch 包装器。`pnpm build` 通过，31 文件入 commit。
