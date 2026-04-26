@@ -21,6 +21,32 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.3 — Frontend skeleton (Next.js 16 + shadcn)
+
+**Done**: `pnpm dlx create-next-app` 起 `frontend/`（Next.js 16.2.4 + React 19.2.4 + TypeScript + Tailwind v4 + App Router + src dir + Turbopack + 无 ESLint + pnpm），shadcn init 后 add 9 个 UI 组件（button/card/input/textarea/label/badge/progress/tabs/dialog），首页换成项目占位文案，lib/api.ts 写了 fetch 包装器。`pnpm build` 通过，31 文件入 commit。
+
+**Files**:
+- New: `frontend/`（含 31 个文件，主要为 next/shadcn 自动生成）
+  - 手写：`frontend/src/app/page.tsx`、`frontend/src/lib/api.ts`
+  - 自动：`package.json`、`pnpm-lock.yaml`、`tsconfig.json`、`components.json`、`src/components/ui/*`（9 个）、`AGENTS.md`、`CLAUDE.md` 等
+
+**Decisions / gotchas**:
+- shadcn 现在用 `@base-ui/react`（不是老的 Radix）—— 是新版 shadcn 的默认 registry
+- `frontend/AGENTS.md` 和 `frontend/CLAUDE.md` 是 create-next-app 自动生成的 Next.js 16 breaking-change 提示，留在 frontend 根（agent 工具会查找包根目录），不要移动
+- shadcn CLI 写在 `dependencies` 而不是 `devDependencies`（创建工具默认行为，未来清理时可调整，暂留）
+- pnpm warning 提到 `msw@2.13.6` 是 shadcn CLI 的传递依赖（registry mocking 用），不是直接依赖，无需处理
+- `.DS_Store` 被 root `.gitignore` 屏蔽，未入 commit
+- ⚠️ **TODO 给 Task 1.6 接 PDF 上传时修复 api.ts 两个已知坑**：
+  1. `Content-Type: application/json` 是无条件注入，`FormData` body 上传会被覆盖导致 FastAPI 422——改为根据 body 类型条件注入
+  2. `throw new Error(${r.status} ${await r.text()})` 把 FastAPI 的结构化 `{"detail":...}` JSON 拼成单行 string，调用方拿不到 status/detail——定义 `ApiError extends Error` 带 status/body 字段
+  这两点是 plan verbatim 引入的小 footgun，Task 1.3 spec 不改；Task 1.6 第一个 commit 修。
+
+**Verify**: `cd frontend && pnpm build` → `✓ Compiled successfully in 1133ms`
+
+**Commit**: `924b92e`
+
+---
+
 ## 2026-04-27 · Task 1.2 — Database models (4 tables) + session
 
 **Done**: 实现 spec §10 的 4 张 SQLModel 表（ResumeSession / Question / DrillAttempt / Report）+ 2 个枚举（QuestionStatus / ExitType），`db/session.py` 提供 engine + `init_db` + `get_session` 依赖；`main.py` 用 lifespan 模式在启动时建表。3 个 round-trip 测试 + 原有 health 测试共 4 passed。
