@@ -1,0 +1,32 @@
+[project]
+name = "mockinterview"
+version = "0.1.0"
+description = "Vertical interview prep agent — backend"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi[standard]>=0.115",
+  "uvicorn>=0.32",
+  "sqlmodel>=0.0.22",
+  "anthropic>=0.40",
+  "pdfplumber>=0.11",
+  "pyyaml>=6.0",
+  "python-multipart>=0.0.12",
+  "pydantic-settings>=2.6",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "httpx>=0.28",
+  "pytest-mock>=3.14",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: hits real Claude API (skipped by default)"]
+addopts = "-v -m 'not live'"
