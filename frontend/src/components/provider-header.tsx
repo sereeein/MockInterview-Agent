@@ -1,15 +1,22 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { findPreset, getProviderConfig } from "@/lib/provider-config";
 
 export function ProviderHeader() {
+  const pathname = usePathname();
   const [label, setLabel] = useState<string | null>(null);
 
   useEffect(() => {
-    const cfg = getProviderConfig();
-    if (cfg) setLabel(findPreset(cfg.provider).label);
-  }, []);
+    const refresh = () => {
+      const cfg = getProviderConfig();
+      setLabel(cfg ? findPreset(cfg.provider).label : null);
+    };
+    refresh();
+    window.addEventListener("storage", refresh);
+    return () => window.removeEventListener("storage", refresh);
+  }, [pathname]);
 
   if (!label) return null;
 

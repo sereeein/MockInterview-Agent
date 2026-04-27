@@ -3,7 +3,7 @@ from fastapi import Header, HTTPException
 from mockinterview.agent.providers import make_provider, set_active
 
 
-def use_provider(
+async def use_provider(
     x_provider: str = Header(default="anthropic", alias="X-Provider"),
     x_api_key: str = Header(default="", alias="X-API-Key"),
     x_model: str | None = Header(default=None, alias="X-Model"),
@@ -11,6 +11,11 @@ def use_provider(
 ) -> None:
     """Per-request dependency that constructs an LLM provider from headers
     and sets it as the active provider for the call stack.
+
+    MUST be `async` so it runs on the main event loop task (not a threadpool worker).
+    ContextVar.set() in a sync dep + sync handler results in two separate threadpool
+    tasks that don't share the var. Async dep + sync handler is fine because anyio
+    propagates the dep's context into the handler's threadpool via `context.run()`.
 
     Headers:
       X-Provider: one of anthropic / openai / deepseek / qwen / zhipu / kimi / wenxin / doubao / gemini / custom

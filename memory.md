@@ -21,6 +21,37 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Hotfix — `use_provider` 必须 async，否则 ContextVar 跨 threadpool 失效
+
+**问题**：本地手动测 v1 走完 /setup → 上传简历 → "fail to fetch" + CORS 错误。
+
+**根因**（耗时 ~30 分钟诊断）：
+- FastAPI 对 sync `def` dep 和 sync `def` handler **各起独立 threadpool worker** 执行
+- ContextVar 在 thread 间**不传播**：dep worker 设了 `_active`，handler worker 读不到 → `RuntimeError: No active LLMProvider`
+- 进而 500 响应**不经过 CORSMiddleware**写头 → 浏览器报 "blocked by CORS policy: No Access-Control-Allow-Origin"。CORS 错误是 500 的二次表现，根本原因不是 CORS
+
+**修复**：把 `use_provider` 改成 `async def`。dep 在主 event loop 任务里执行 → `set_active()` 写主任务的 context → anyio 通过 `context.run(func, *args)` 把主任务 context 拷贝到 handler 的 worker thread → handler 看到 ✓。`conftest.py` 的 `_test_provider_override` 也同步改 async。
+
+**Files**:
+- Modified: `backend/src/mockinterview/routes/_deps.py`（`def` → `async def`，加注释解释为什么必须 async）, `backend/tests/conftest.py`（同样改 async）
+
+**Decisions / gotchas**:
+- ⚠️ **后续任何 ContextVar-based dep 必须 async**——否则 sync handler 看不见。这是 FastAPI + anyio 的固定行为，不是 bug
+- 改 async 不要求里面有 await（Python 允许 async 函数无 await，FastAPI 仍把它当 awaitable 处理）
+- 也另一种修法：route handler 全改 async + 内部用 asyncio 调 sync 工具——工作量大，本修法是最小改动
+- "fail to fetch" 看似 CORS 实则 500：以后调试 CORS 错误先看 backend log 有没有 5xx，**90% 都是 500 响应没经过 middleware 写头**
+
+**额外修**：
+- `frontend/.env.local` 写入 `NEXT_PUBLIC_API_URL=http://localhost:8002`（持久化，不依赖 shell env）—— Next.js 16 dev mode 需要 .env.local 才能稳定加载
+- `provider-header.tsx` 改 `usePathname` 监听路由 + `storage` 事件——/setup 切换 provider 后立刻反映到顶部 badge（之前只 mount 一次）
+- backend `CORS_ORIGINS` 加 `http://127.0.0.1:3000` 兜底（用户可能用 127.0.0.1 不是 localhost）
+
+**Verify**: `curl -X POST http://127.0.0.1:8002/resume -H "X-API-Key: sk-ant-...invalid"` → `HTTP 400` + `access-control-allow-origin` 头都齐 ✓；63 backend tests 仍全过
+
+**Commit**: 待回头一起 commit（local manual test 阶段）
+
+---
+
 ## 2026-04-27 · Phase 4.0 多 provider 改造完成 + Task 4.0.4 — eval 适配 + 文档
 
 ### Task 4.0.4 内容
