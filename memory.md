@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.9 — README + 简历金句 + 小红书 + 部署手册
+
+**Done**: 7 个文档文件填齐 v1 全部用户可读资产：(1) `README.md` 项目概览 + 架构 + 评估阈值 + 本地启动 + 链接到所有 artifacts；(2) `docs/resume-bullets.md` 1 句话项目描述 + 4 组 bullet 变体（架构 / UX / 评估 / 工程深度）+ 实战命中率 living-metric 模板；(3) `docs/xiaohongshu/{week1,week2,week3,week4}.md` 4 周小红书模板（简历解析 / 场景切换 / 前端 / 评估上线）含图片提示；(4) `docs/deployment.md` 把 Task 4.6/4.7/4.8 的用户可执行步骤合并：跑 eval 命令 + Railway backend 部署（Dockerfile/.dockerignore 代码块 + Volume + env vars）+ Vercel frontend 部署 + 常见坑（CORS list 必须 JSON 形式 / SQLite Volume 路径要 4 斜杠 / prompt cache 监控 / 成本预算）。
+
+**Files**:
+- New: `README.md`, `docs/resume-bullets.md`, `docs/xiaohongshu/{week1,week2,week3,week4}.md`, `docs/deployment.md`
+
+**Decisions / gotchas**:
+- 部署 Dockerfile 故意只放代码块在 `docs/deployment.md` 不直接创建 `backend/Dockerfile`——Task 4.7 用户驱动执行时再 copy
+- 简历金句和小红书 week4 都留 `<X>%` placeholder——用户跑完 Task 4.6 评估后回填
+- 成本预算公开记录：每个 drill 3 轮 ~$0.05-0.10；8 pair eval 5-15 USD（Opus 4.7 + caching）
+- README 链接到 PROJECT.md / spec / plan / memory.md / deployment.md，形成完整 onboarding 链
+
+**Verify**: 7 文件就绪，git status clean
+
+**Commit**: `98f516c`
+
+---
+
 ## 2026-04-27 · Task 4.5 — run_eval.py orchestrator
 
 **Done**: `eval/run_eval.py` 220 行，把 4.1-4.4 的 dataset / 3 judge / simulator 与 backend 出题引擎串联起来。每个 pair：(1) 读简历 + JD → `parse_resume_text` 调 backend Claude prompt 转结构化 → `generate_questions` 出 12 题；(2) 12 题逐个调 `relevance.score_question` 打契合度；(3) 取前 3 道 T1 题，每题 2 轮模拟 U-loop（`user_simulator.simulate_answer` 中等用户答 + `evaluate_and_followup` agent 评 + `drilling.judge_followup` 判命中最弱）；(4) 第一道 T1 题做 baseline_compare 盲评。每个 LLM 调用都 try/except 兜底，单点失败不影响后续 pair。Markdown 报告写到 `eval/reports/<YYYY-MM-DD>.md`，含 Summary（3 个核心指标 + 阈值）/ Per-pair detail 表 / Raw JSON。
