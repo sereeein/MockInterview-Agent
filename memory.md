@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.1 — User signal classifier（Phase 2 起步）
+
+**Done**: `agent/user_signals.py` ~30 行纯正则分类器：5 类信号（END / SKIP / STUCK / SWITCH_SCENARIO / ANSWER fallback），按 `_PATTERNS` 列表顺序匹配（SKIP > STUCK > SWITCH_SCENARIO > END > ANSWER）。5 单测全过。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/user_signals.py`, `backend/tests/test_user_signals.py`
+
+**Decisions / gotchas**:
+- 跳过创建 `agent/prompts/user_signals.py`（plan 原列出但 v1 纯正则，不需要 LLM 调用）—— v1.5 加 LLM-based ambiguity resolution 时再创建
+- 模式顺序非常关键：用户输入"跳过这道我没思路"（同时含"跳过"和"没思路"），按 SKIP-first 原则返 SKIP；这是有意行为
+- `text.strip().lower()` 必须在 match 前应用，因为 `\bskip\b` `\bhint\b` 是英文 word-boundary，需要 lowercase 才能命中
+- Phase 2 第一个 task 完成；下游 Task 2.6 状态机会 import `classify` 决定每条用户输入走哪条 exit/redirect 路径
+
+**Verify**: `cd backend && uv run pytest tests/test_user_signals.py -v` → `5 passed in 0.01s`
+
+**Commit**: `d89f30f`
+
+---
+
 ## 2026-04-27 · Phase 1 完成 + Task 1.10 — POST /questions/generate + CRUD
 
 ### Task 1.10 内容
