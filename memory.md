@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 3.4 — Drill page (chat UI)
+
+**Done**: `/drill/[id]` 路由（id = question_id，进页面后调 `startDrill` 起 session）。`ChatInterface` 组件：消息气泡（user 右对齐 primary 色 / agent 左对齐 muted 色）+ 自动滚动（`useEffect` on transcript）+ scenario_switch 加 amber ring + prompt_mode 加 blue ring + 顶部 emoji 标签（"↔ 换场景" / "💡 思考框架"）。底部 Textarea + 4 个快捷按钮（跳过 / 换场景 / 求提示 / 结束）—— 按钮**只填充输入框**不直接发送（用户可编辑后再发）。题目 ENDED 后 1.2s 跳 `/report/{drill_id}`。`pnpm build` 4 路由成功。
+
+**Files**:
+- New: `frontend/src/components/chat-interface.tsx`, `frontend/src/app/drill/[id]/page.tsx`
+
+**Decisions / gotchas**:
+- Next.js 16 App Router 参数现在是 `params: Promise<{id: string}>`，要 `use(params)` 解包——React 19 标准 pattern
+- 快捷按钮"换场景"按钮填的是"能换个例子吗"——故意命中 Task 2.6 修补过的 `换一个/换个/再换` regex，这是端到端契合的关键
+- 4 路由（/、/library、/drill/[id] 动态、/_not-found）；`/report/[drill_id]` Task 3.5 加，1.2s redirect 当前会 404
+- ChatInterface 设计可在 Task 3.5（报告 transcript view）和 Task 3.6（mock 模式）复用——单一职责的小组件
+
+**Verify**: `cd frontend && pnpm build` → `Compiled successfully`，4 routes
+
+**Commit**: `507e7b6`
+
+---
+
 ## 2026-04-27 · Task 3.3 — Library page
 
 **Done**: `/library` 路由：QuestionCard（5 状态颜色 / category & difficulty badge / 最高分 / 最近练习时间）+ LibraryStatsBar（顶部 4 数字：题库 / 未练 / 已练 / 待重练）+ T1-T5 分类按钮筛选。卡片点击跳 `/drill/{id}`，"开始模拟面试" 按钮跳 `/mock?session=...`。`pnpm build` 1.1s 0 错误。
