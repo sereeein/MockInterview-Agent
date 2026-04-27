@@ -21,6 +21,27 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.0.1 — Provider 抽象层（Phase 4.0 多 provider 改造起步）
+
+**Done**: 用户决定 v1 上 GitHub 必须支持多 provider BYOK，开 Phase 4.0 改造。本 task 完成 backend 抽象层：`agent/providers/` 包（base.py 抽象 + anthropic.py + openai_compat.py + gemini.py + __init__.py 工厂 & ContextVar），10 个 PROVIDER_PRESETS（anthropic / openai / deepseek / qwen / zhipu / kimi / wenxin / doubao / gemini / custom，OpenAI-compat 一个适配器吃 7 家 base_url）。`client.py` 重构为薄 facade：`call_json` 委托给 `active()` ContextVar 取出的 provider；`build_cached_system` 退化为字符串拼接（cache_control 移到 AnthropicProvider 内部）；`parse_json_response` 保留。新装 `openai>=1.50`、`google-genai>=0.4`（实际装 1.73.1 / 2.32.0）。11 新 provider 单测 + 既有 52 单测全过 = **63 passed**。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/providers/{__init__,base,anthropic,openai_compat,gemini}.py`, `backend/tests/test_providers.py`
+- Modified: `backend/pyproject.toml`（+ openai + google-genai）, `backend/src/mockinterview/agent/client.py`（重构为 facade）, `backend/tests/test_agent_client.py`（适配新 build_cached_system 形态）, `backend/tests/test_drill_loop.py`（修复隐性 bug—fall-through 测试原本意外打真 API，现在 mock 掉 `evaluate_and_followup`）
+
+**Decisions / gotchas**:
+- ⚠️ **重大架构变更**：所有未来路由必须用 FastAPI dependency 把 user 的 X-Provider/X-API-Key/X-Model header 转成 active provider（Task 4.0.2 加）；6 个既有 agent 模块（drill_eval/question_gen/resume_parser/exemplar/mock_aggregator/drill_loop）**完全不动**——signature 不变，只是底层调度不一样了
+- ContextVar 模式选型理由：避免给每个 agent 函数加 provider 参数（10+ call sites 要改）；context 自动传播到 async 调用栈
+- OpenAI-compat fallback 机制：先尝试 `response_format={"type":"json_object"}`，遇到不支持的 provider 自动降级到普通 chat completion + fenced JSON 解析——保证宽兼容
+- `cache_control={"type":"ephemeral"}` 是 Anthropic 独有特性，迁到 AnthropicProvider 内部；其他 provider 没这特性时 prompt caching 会消失（Anthropic 仍 70% 节省，OpenAI 自动 prefix cache 也有，Gemini 没有显式 cache）
+- 隐性 bug 暴露：`test_advance_switch_scenario_caps_at_2_then_hard_limit` 之前其实在打真 API（依赖 `.env` 的 ANTHROPIC_API_KEY），现在重构后强制要 active provider 就暴露了。已通过 mock `evaluate_and_followup` 修复，测试 contract 不变
+
+**Verify**: `cd backend && env -u VIRTUAL_ENV uv run pytest -v` → **63 passed**
+
+**Commit**: `8178dd8`
+
+---
+
 ## 2026-04-27 · Task 4.9 — README + 简历金句 + 小红书 + 部署手册
 
 **Done**: 7 个文档文件填齐 v1 全部用户可读资产：(1) `README.md` 项目概览 + 架构 + 评估阈值 + 本地启动 + 链接到所有 artifacts；(2) `docs/resume-bullets.md` 1 句话项目描述 + 4 组 bullet 变体（架构 / UX / 评估 / 工程深度）+ 实战命中率 living-metric 模板；(3) `docs/xiaohongshu/{week1,week2,week3,week4}.md` 4 周小红书模板（简历解析 / 场景切换 / 前端 / 评估上线）含图片提示；(4) `docs/deployment.md` 把 Task 4.6/4.7/4.8 的用户可执行步骤合并：跑 eval 命令 + Railway backend 部署（Dockerfile/.dockerignore 代码块 + Volume + env vars）+ Vercel frontend 部署 + 常见坑（CORS list 必须 JSON 形式 / SQLite Volume 路径要 4 斜杠 / prompt cache 监控 / 成本预算）。
