@@ -1,11 +1,11 @@
 from mockinterview.agent.client import build_cached_system, parse_json_response
 
 
-def test_build_cached_system_marks_cache_control():
-    blocks = build_cached_system(["你是面试官", "rubric: ..."])
-    assert blocks[0]["type"] == "text"
-    assert "你是面试官" in blocks[0]["text"]
-    assert blocks[-1].get("cache_control") == {"type": "ephemeral"}
+def test_build_cached_system_concatenates_parts():
+    out = build_cached_system(["你是面试官", "rubric: ..."])
+    assert isinstance(out, str)
+    assert "你是面试官" in out
+    assert "rubric: ..." in out
 
 
 def test_parse_json_response_extracts_json_block():

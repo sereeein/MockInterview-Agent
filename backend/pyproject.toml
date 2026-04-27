@@ -12,6 +12,8 @@ dependencies = [
   "pyyaml>=6.0",
   "python-multipart>=0.0.12",
   "pydantic-settings>=2.6",
+  "openai>=1.50",
+  "google-genai>=0.4",
 ]
 
 [dependency-groups]

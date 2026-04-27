@@ -76,9 +76,19 @@ def test_advance_switch_scenario_consumes_budget_and_resets_round():
 
 def test_advance_switch_scenario_caps_at_2_then_hard_limit():
     state = _state(scenario_switch_count=2, followup_rounds=2)
-    out = advance(state, "再换一个")
     # 3rd switch attempt should not consume; falls through to normal answer eval
-    # because we've capped budget
+    # because we've capped budget. Mock evaluate_and_followup since post-Task 4.0.1
+    # call_json requires an active LLMProvider in the request context (set by route
+    # deps in Task 4.0.2). This test only asserts the budget-cap branch behaviour.
+    fake_eval = DrillEvalResult(
+        scores={"situation": 1, "task": 1, "action": 1, "result": 1},
+        total_score=4,
+        weakest_dimension="action",
+        weakness_diagnosis="弱",
+        next_followup="再追一问？",
+    )
+    with patch("mockinterview.agent.drill_loop.evaluate_and_followup", return_value=fake_eval):
+        out = advance(state, "再换一个")
     assert out.scenario_switch_count == 2
 
 
