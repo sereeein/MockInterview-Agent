@@ -21,6 +21,41 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Phase 2 完成 + Task 2.8 — Single-question report endpoint
+
+### Task 2.8 内容
+
+**Done**: `routes/reports.py` 新增 `GET /reports/drill/{drill_id}` endpoint，聚合 DrillAttempt 持久化数据 + Question 元信息 + rubric YAML 配置（按 `q.category` 实时从 YAML 取） → 返 `SingleReport` Pydantic 模型（14 字段：drill_id / question_id / question_text / category / transcript / rubric / rubric_scores / total_score / exit_type / scenario_switch_count / prompt_mode_count / followup_rounds / exemplar_answer / improvement_suggestions）。1 单测端到端覆盖（起 drill → 软退出答 → 拉报告）。
+
+**Files**:
+- New: `backend/src/mockinterview/routes/reports.py`, `backend/tests/test_routes_reports.py`
+- Modified: `backend/src/mockinterview/main.py`（注册 reports router）
+
+**Decisions / gotchas**:
+- `exit_type` 在 fresh persist 时是 `ExitType.SOFT` enum，从 JSON load 时是 string——用 `.value if hasattr(...) else ...` 双路守卫（spec verbatim）
+- `load_rubric` 的 lru_cache：第一次请求读 YAML 后续请求走内存——同时满足 spec "loaded at request time" 意图和性能
+- Phase 3 前端的 radar chart / report 页面将消费这个 endpoint
+
+**Verify**: `cd backend && uv run pytest -v` → `50 passed in 3.59s`
+
+**Commit**: `67984e5`
+
+### Phase 2 总结
+
+- ✅ 8 个 task 全部完成（Task 2.1-2.8 + 1 个 Task 2.1 regex 回填）
+- ✅ 50 单测全过；Phase 1 26 单测 + Phase 2 24 单测
+- ✅ U-loop 完整功能：6 exits（USER_END / SKIP / SOFT / HARD_LIMIT）+ 2 redirects（STUCK 提示模式 / SWITCH_SCENARIO 场景切换）+ budget caps（switch ≤2 / followup ≤3 / soft threshold 9）
+- ✅ HTTP 链路：`POST /drill` → `POST /drill/{id}/answer` × N → `GET /reports/drill/{id}`
+- ✅ 服务端无状态（state_snapshot JSON 列），Phase 4 部署可水平扩展
+- ✅ git tag `w2-done`
+- ⏳ 已记录的待办（不阻塞）：
+  - Schema 改动后老 app.db 需手动删（Phase 4 加 Alembic 或文档化）
+  - 测试 conftest 共享 dev DB engine，测试与开发环境耦合（Phase 3 加更多测试时切 in-memory 并 override `get_session`）
+
+下一步：进入 **Phase 3 Week 3** —— 前端 + 报告（7 个 task：Next.js 16 页面 + shadcn 组件 + Recharts 雷达图 / bar chart + 整套面试模式 5 题串联）。
+
+---
+
 ## 2026-04-27 · Task 2.7 — Drill API endpoints + persistence
 
 **Done**: 3 个 HTTP endpoint：`POST /drill`（起会话）、`POST /drill/{id}/answer`（推进）、`GET /drill/{id}`（读）。`agent/drill_storage.py` 纯 (de)serialization：`to_snapshot(DrillState) → dict` + `from_snapshot(dict) → DrillState` 互逆。`DrillAttempt` 加 `state_snapshot` JSON 列存完整 state——服务端无状态，每次请求重新 hydrate。题目 ENDED 时：finalize fields (exit_type, total_score) + 非 skip exit 调 `synthesize_exemplar` + 更新 `Question.status`/`best_score`。3 单测全过，全套 49 passed。
