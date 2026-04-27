@@ -21,6 +21,24 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 3.3 — Library page
+
+**Done**: `/library` 路由：QuestionCard（5 状态颜色 / category & difficulty badge / 最高分 / 最近练习时间）+ LibraryStatsBar（顶部 4 数字：题库 / 未练 / 已练 / 待重练）+ T1-T5 分类按钮筛选。卡片点击跳 `/drill/{id}`，"开始模拟面试" 按钮跳 `/mock?session=...`。`pnpm build` 1.1s 0 错误。
+
+**Files**:
+- New: `frontend/src/components/question-card.tsx`, `frontend/src/components/library-stats-bar.tsx`, `frontend/src/app/library/page.tsx`
+
+**Decisions / gotchas**:
+- ⚠️ **Next.js 16 必须把 `useSearchParams` 包进 `<Suspense>`**，否则 build 会失败"Missing Suspense boundary"。结构：`LibraryPage` default export = Suspense wrapper + fallback；`LibraryView` 内部组件实际用 hook。下游用 `useSearchParams` 的页面（Task 3.6 mock）也要复制这个 pattern
+- QuestionCard 的 `STATUS_VARIANT` 把 `improved` 映射到 `default`（同 `practiced`）：UI 上区分不大，下游若想要金色 IMPROVED 视觉标识可加 ring
+- 5 个状态有色彩区分：未练 outline / 已练 default / 待重练 destructive / 已改进 default / 已跳过 secondary
+
+**Verify**: `cd frontend && pnpm build` → `Compiled successfully in 1095ms`，3 routes（/、/library、/_not-found）
+
+**Commit**: `dce5d58`
+
+---
+
 ## 2026-04-27 · Task 3.2 — Upload page
 
 **Done**: 替换 `frontend/src/app/page.tsx` 的占位为 4 段式上传表单：UploadZone（拖拽 + click，仅接 PDF）+ RoleSelector（4 卡片：产品/数据/AI/其他）+ JD textarea（可选）+ 公司 input（可选）。提交按钮在 file && role 都填后激活，busy 时显示"解析中…可能需要 30-60 秒"，错误用 `text-destructive` 红色。成功后 `router.push("/library?session={id}")`（route Task 3.3 加）。`pnpm build` 1.1s 0 错误。
