@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session
 
+from mockinterview.agent.mock_aggregator import aggregate_mock
 from mockinterview.agent.rubrics import load_rubric
 from mockinterview.db.models import DrillAttempt, Question
 from mockinterview.db.session import get_session
@@ -49,3 +50,8 @@ def drill_report(drill_id: int, db: Session = Depends(get_session)):
         exemplar_answer=d.exemplar_answer,
         improvement_suggestions=d.improvement_suggestions,
     )
+
+
+@router.get("/mock/{mock_id}")
+def mock_report_alias(mock_id: int, db: Session = Depends(get_session)):
+    return aggregate_mock(db, mock_id)

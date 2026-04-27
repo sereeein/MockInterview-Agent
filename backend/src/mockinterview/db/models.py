@@ -85,3 +85,15 @@ class Report(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     session: ResumeSession | None = Relationship(back_populates="reports")
+
+
+class MockSession(SQLModel, table=True):
+    __tablename__ = "mock_session"
+    id: int | None = Field(default=None, primary_key=True)
+    resume_session_id: int = Field(foreign_key="resume_session.id", index=True)
+    question_ids: list[int] = Field(sa_column=Column(JSON))
+    drill_attempt_ids: list[int] = Field(default_factory=list, sa_column=Column(JSON))
+    current_index: int = 0
+    status: str = "active"  # active | ended
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ended_at: datetime | None = None
