@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.0.2 — FastAPI dependency + route 集成
+
+**Done**: `routes/_deps.py` 新增 `use_provider(x_provider, x_api_key, x_model, x_base_url)` 依赖：从请求 header 读 4 个字段，缺 X-API-Key 返 401，未知 provider 返 400，否则 `make_provider()` + `set_active()`。把 `Depends(use_provider)` 加到 5 个真正调 agent 的 endpoint：`POST /resume` / `POST /questions/generate` / `POST /drill` / `POST /drill/{id}/answer`（其余 GET/PATCH/list/mock/reports 都是纯 DB 查询不动）。`conftest.py` 用 `app.dependency_overrides[use_provider]` 在测试时跳过 header 检查 + 设 MagicMock provider。**63/63 tests 全过 0 修改**——既有 route 测试早就在 agent 函数 boundary mock 过（parse_resume/generate_questions/synthesize_exemplar etc），MagicMock provider 永远不会被实际调用。
+
+**Files**:
+- New: `backend/src/mockinterview/routes/_deps.py`
+- Modified: `backend/src/mockinterview/routes/{resume,questions,drill}.py`（精确加 deps 到调 agent 的 endpoint），`backend/tests/conftest.py`（dependency_overrides）
+
+**Decisions / gotchas**:
+- ContextVar 在 TestClient 同步路径里跨 request 是隔离的（每个 request 用独立 fastapi context），所以 override 不会污染下一个测试
+- mock.py 和 reports.py 故意不加 deps：mock_aggregator 是纯 SQL 聚合不调 LLM，aggregate_mock 也是纯 dict 计算
+- header 名用 `X-Provider` 不是 `Provider`：FastAPI Header 默认 alias 把 `_` 转 `-`，但显式 alias 更清晰
+- 缺 X-API-Key 时返 401（认证语义），不是 400（请求格式语义）—— 引导前端跳到 /setup 页
+
+**Verify**: `cd backend && env -u VIRTUAL_ENV uv run pytest -v` → **63 passed**
+
+**Commit**: `6e87a24`
+
+---
+
 ## 2026-04-27 · Task 4.0.1 — Provider 抽象层（Phase 4.0 多 provider 改造起步）
 
 **Done**: 用户决定 v1 上 GitHub 必须支持多 provider BYOK，开 Phase 4.0 改造。本 task 完成 backend 抽象层：`agent/providers/` 包（base.py 抽象 + anthropic.py + openai_compat.py + gemini.py + __init__.py 工厂 & ContextVar），10 个 PROVIDER_PRESETS（anthropic / openai / deepseek / qwen / zhipu / kimi / wenxin / doubao / gemini / custom，OpenAI-compat 一个适配器吃 7 家 base_url）。`client.py` 重构为薄 facade：`call_json` 委托给 `active()` ContextVar 取出的 provider；`build_cached_system` 退化为字符串拼接（cache_control 移到 AnthropicProvider 内部）；`parse_json_response` 保留。新装 `openai>=1.50`、`google-genai>=0.4`（实际装 1.73.1 / 2.32.0）。11 新 provider 单测 + 既有 52 单测全过 = **63 passed**。
