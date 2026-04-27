@@ -72,13 +72,30 @@ def run_pair(client: Anthropic, pair: dict) -> dict:
 
     console.print(f"[bold]→ pair {pair['id']}[/bold] (role={pair['role']}, jd={'yes' if jd_text else 'no'})")
 
-    structured = parse_resume_text(resume_text)
-    qlist = generate_questions(
-        role=pair["role"],
-        resume_json=structured,
-        jd_text=jd_text,
-        company_name=None,
-    )
+    try:
+        structured = parse_resume_text(resume_text)
+    except Exception as e:
+        console.print(f"  [red]parse_resume failed: {e}[/red]")
+        return {
+            "pair": pair["id"], "n_questions": 0, "relevance_scores": [],
+            "relevance_avg": 0.0, "drill_hits": [], "drill_hit_rate": None,
+            "baseline_we_won": None, "fatal_error": f"parse_resume: {e}",
+        }
+
+    try:
+        qlist = generate_questions(
+            role=pair["role"],
+            resume_json=structured,
+            jd_text=jd_text,
+            company_name=None,
+        )
+    except Exception as e:
+        console.print(f"  [red]generate_questions failed: {e}[/red]")
+        return {
+            "pair": pair["id"], "n_questions": 0, "relevance_scores": [],
+            "relevance_avg": 0.0, "drill_hits": [], "drill_hit_rate": None,
+            "baseline_we_won": None, "fatal_error": f"generate_questions: {e}",
+        }
 
     # Relevance scoring on every question
     rel_scores = []

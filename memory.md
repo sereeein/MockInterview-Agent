@@ -21,6 +21,36 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.6 — 评估跑通（含坑总结）
+
+**Done**: 跑完 8 pair × ~35 LLM calls 的自动评估，写入 `eval/reports/2026-04-27.md`。
+
+**指标**：
+- 出题相关性：2.21/3 总均值（被 2 个失败 pair 拉低）；6 个成功 pair 均值 **2.94/3**——优秀
+- 追问命中率：**100%**（28/28 全击中最弱维度）—— 远超 70% 阈值
+- vs 裸 Claude 盲评胜率：**0%**——**评估方法有 bug，不是 agent 真的差**（详见下）
+
+**3 类已知问题（v1.5 修）**：
+
+1. **JSON 解析仍 brittle**：`_clean_json_payload` 处理了中文标点 + 中文引号 + trailing comma，但 Claude 在 line 5 col 76 / line 4 col 75 这类**固定位置**仍会输出格式错乱的 JSON。说明某个 prompt 段落触发模型的特定 token 习惯。修法：要么在 question_gen / drill_eval prompt 末尾加更严格的"严格 JSON 不带中文标点"提示，要么 fallback 用 LLM 二次清洗（但成本翻倍）
+2. **2 个 pair fatal failure**（`pm_alpha_self` / `other_no_jd`）：`generate_questions` 的 JSON 抛异常被 run_pair 的 try/except 兜住，对应 pair 0 分但 eval 整体没崩
+3. **baseline win rate 0% 是评估方法 bug**：`run_eval.py` 的 ours_pair 用 `<placeholder mid-quality answer>` 当 user 答案喂给 evaluate_and_followup → agent 输出的 first_followup 必然怪（"你答案太敷衍"之类） → judge 盲评必输给只看简历无 transcript 的 baseline。**修法**（1 小时工程）：先调 user_simulator 生成合成 mid-quality 答案再传给 evaluate_and_followup，重新跑一次 eval
+
+**Files**:
+- New: `eval/reports/2026-04-27.md`
+- Modified: `backend/src/mockinterview/agent/client.py`（加 `_clean_json_payload` + 改 parse_json_response 取 first-{ to last-}），`eval/run_eval.py`（generate_questions / parse_resume_text 加 try/except + fatal_error 字段）
+
+**Decisions / gotchas**:
+- **简历金句** 用 「出题相关性 2.94/3 · 追问命中率 100% · 8 pair 自动回归」 三个指标，**回避 baseline 0% 的误导**
+- 100% drilling hit rate 太完美，可能 judge LLM 太宽松（任何看似合理的追问都判 hit_weakest）—— v1.5 调判官 prompt 让标准更严，可能掉到 ~80%，但更可信
+- Phase 5 第一件事：修 baseline 评估 bug，跑出真实胜率；然后 commit `eval/reports/2026-04-28.md` 当 v1.0 final 数据
+
+**Verify**: `eval/reports/2026-04-27.md` 写入；63 backend tests 仍全过；前端 build clean
+
+**Commit**: 待和 hotfix / 容错 / 简历金句填数一起 commit
+
+---
+
 ## 2026-04-27 · Hotfix — `use_provider` 必须 async，否则 ContextVar 跨 threadpool 失效
 
 **问题**：本地手动测 v1 走完 /setup → 上传简历 → "fail to fetch" + CORS 错误。
