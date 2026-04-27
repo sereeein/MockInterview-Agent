@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.4 — Prompt mode (思考框架)
+
+**Done**: 写 `agent/prompts/prompt_mode.py`（system 教 agent "卡壳时不追问、不给答案，只给思考框架"），在 `agent/drill_eval.py` 追加 `give_thinking_framework(*,category,question_text,last_user_text)`：从 rubric 取 4 维度 label 拼成"维度1, 维度2, ..."传给 LLM，返字符串 hint。1 单测 mock 通过，全套 36 passed。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/prompts/prompt_mode.py`, `backend/tests/test_prompt_mode.py`
+- Modified: `backend/src/mockinterview/agent/drill_eval.py`（追加 1 import + 1 function；现在共 3 公开函数：evaluate_and_followup / propose_scenario_switch / give_thinking_framework）
+
+**Decisions / gotchas**:
+- 卡壳信号（Task 2.1 分类为 STUCK）→ Task 2.6 状态机调用本 helper，给思考框架后**不计入追问轮次**（spec §5.3 #5）
+- 不直接 expose rubric 维度的 description（避免泄露评分标准），只 expose label 让 LLM 自己改写成自然口吻的切入问题
+- 同样的 keyword-only 模式保持一致
+
+**Verify**: `cd backend && uv run pytest tests/test_prompt_mode.py -v` → `1 passed`；全套 `36 passed`
+
+**Commit**: `5048838`
+
+---
+
 ## 2026-04-27 · Task 2.3 — Scenario switch helper（D 灵魂）
 
 **Done**: 写 `agent/prompts/scenario_switch.py`（system 教 agent "释放场景维度，保留考察意图"；user template 输入题面/原意图/最后答案/已切换次数），在 `agent/drill_eval.py` 追加 `propose_scenario_switch(*,question_text,original_intent,last_user_answer,prior_switches)` 单 LLM 调用返字符串 prompt。1 单测 mock 通过，全套 35 passed 无回归。
