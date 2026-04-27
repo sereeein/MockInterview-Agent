@@ -21,6 +21,24 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.2 — Relevance judge
+
+**Done**: `eval/judges/relevance.py` `score_question(client, *, resume, jd, question)` 函数：用 Claude 4.7 给每道生成题打 0-3 分契合度（0=完全无关 / 1=牵强 / 2=相关 / 3=精准引用具体项目）。系统 prompt 带 `cache_control` ephemeral 缓存（同 pair 内多题复用）；resume 截 2000 chars，JD 截 1200 chars 控成本。
+
+**Files**:
+- New: `eval/judges/__init__.py`, `eval/judges/relevance.py`
+
+**Decisions / gotchas**:
+- eval 用独立的 `Anthropic()` client，不 import backend 的 `client.py`——eval 是 self-contained 子项目
+- model id `claude-opus-4-7` 硬编码：未来若调评分模型版本，这里是单点修改
+- 没写单测：eval helper 在 Task 4.5 的 `run_eval.py` 端到端测
+
+**Verify**: 文件存在；待 Task 4.5 编排时端到端验证
+
+**Commit**: `c22fb23`
+
+---
+
 ## 2026-04-27 · Task 4.1 — Eval dataset curation（Phase 4 起步）
 
 **Done**: 建 `eval/` 评估子项目（uv-managed，与 backend 分离）：5 份合成简历（self_pm/friend_pm/friend_data/anon_ai/anon_other，每份 ~770-960 chars，含 NTU 数据科学硕士 / 字节-腾讯实习 / Shopee 数据科学家 / AI 产品 / 四大咨询五种画像，每份带 SYNTHETIC PLACEHOLDER 注释）+ 3 份合成 JD（PM 字节 / 数据 Shopee / AI alpha）+ pairs.yaml 8 个评估配对（覆盖 4 个 role × JD 有/无变种 + 1 个 PM 跨域 AI alpha 边界 case）+ pyproject.toml（anthropic/pyyaml/pydantic/rich）+ .gitignore（.venv/__pycache__/reports/uv.lock）。`uv sync` 装了 21 个包成功。
