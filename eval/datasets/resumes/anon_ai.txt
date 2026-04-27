@@ -1,0 +1,30 @@
+<!-- SYNTHETIC PLACEHOLDER — replace with real脱敏 resume during job-hunt season -->
+
+陈同学
+邮箱：chen.ai@example.com ｜ 电话：+86 159XXXX XXXX
+求职意向：AI 产品经理 / LLM 应用方向
+
+教育背景
+清华大学 ｜ 计算机科学 学士 ｜ 2019.09 – 2023.06，GPA 3.8/4.0
+卡内基梅隆大学 ｜ 人机交互 硕士 ｜ 2023.08 – 2024.12
+
+工作经历
+某 AI 创业公司（B 轮）｜ AI 产品经理 ｜ 2025.02 – 至今
+- 主导企业知识库 RAG 产品 0→1 落地，覆盖检索召回、重排、prompt 编排、引用展示全链路。
+- 设计离线评估体系：标注集 1200 条，评估指标包含 Recall@5、Faithfulness、Citation Coverage；上线前阻断 3 个 hallucination 严重 badcase。
+- 推动 hallucination 治理专项：引入 self-check + 引用一致性校验，将"无依据回答率"从 14% 降至 4.2%。
+- 与算法、前端、运维 5 人小组每周双迭代，3 个月内付费客户数从 8 增至 27。
+
+实习经历
+微软亚洲研究院 ｜ 研究实习生 ｜ 2024.05 – 2024.08
+- 探索多步 LLM agent 规划能力评测，构建 250 道工具调用任务集，对比 5 个开源模型。
+
+项目经历
+个人项目：法律咨询 LLM agent 原型 ｜ 2024.09 – 2024.12
+- 使用 LangGraph 编排"问题分类 → 法条检索 → 引用生成 → 风险提示"四步 agent。
+- 基于 80 条真实问询构建评估集，end-to-end 正确率 73%，单次平均成本 $0.012。
+
+技能
+Python / TypeScript / LangChain / LangGraph / pgvector / Anthropic & OpenAI API
+评估指标设计、prompt 工程、agent workflow、用户访谈
+中文母语 ｜ 英文 TOEFL 108

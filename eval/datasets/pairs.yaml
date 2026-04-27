@@ -1,0 +1,35 @@
+# v1 evaluation pairs (resume × JD × role)
+# Replace placeholder resumes/JDs with real脱敏 content during job-hunt season.
+pairs:
+  - id: pm_bytedance_self
+    resume: self_pm.txt
+    jd: pm_bytedance.txt
+    role: pm
+  - id: pm_no_jd_friend
+    resume: friend_pm.txt
+    jd: null
+    role: pm
+  - id: data_shopee_friend
+    resume: friend_data.txt
+    jd: data_shopee.txt
+    role: data
+  - id: ai_no_jd
+    resume: anon_ai.txt
+    jd: null
+    role: ai
+  - id: ai_alpha
+    resume: anon_ai.txt
+    jd: ai_alpha.txt
+    role: ai
+  - id: data_no_jd
+    resume: friend_data.txt
+    jd: null
+    role: data
+  - id: pm_alpha_self
+    resume: self_pm.txt
+    jd: ai_alpha.txt   # senior PM applying to AI company — cross-domain test
+    role: pm
+  - id: other_no_jd
+    resume: anon_other.txt
+    jd: null
+    role: other

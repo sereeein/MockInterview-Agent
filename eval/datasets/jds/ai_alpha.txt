@@ -1,0 +1,20 @@
+<!-- SYNTHETIC PLACEHOLDER -->
+
+【Alpha AI】AI 产品经理 — Agent 平台方向
+
+公司简介：
+Alpha AI 是一家面向企业的 AI 基础设施公司，提供 LLM 应用编排与 agent 运行时平台。
+
+岗位职责：
+1. 负责 agent 平台核心模块（编排、记忆、工具调用、评估）的产品规划与迭代；
+2. 设计面向企业客户的 RAG 解决方案，覆盖检索、重排、引用、hallucination 治理；
+3. 搭建 LLM 应用的评估体系：定义指标（faithfulness、answer relevance、tool-use accuracy）、构建标注集与回归测试；
+4. 与算法、平台工程协作，推动可扩展性架构落地，支持百级并发租户场景；
+5. 与企业客户深度共创，提炼通用能力沉淀至平台。
+
+任职要求：
+1. 3 年以上 ToB 或平台型产品经验，至少 1 年深度参与 LLM / agent 相关产品；
+2. 理解 RAG、function calling、multi-step agent、prompt 工程的工程边界与失败模式；
+3. 熟悉评估指标设计与离线评测流程，有过 hallucination 治理经验加分；
+4. 良好的技术深度与系统思维，能与算法工程师就 trade-off 进行有效讨论；
+5. 加分项：开源 LLM 框架贡献、企业客户咨询经验、评估自动化经验。
