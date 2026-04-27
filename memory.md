@@ -21,6 +21,48 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Phase 3 完成 + Task 3.7 — Mock report page
+
+### Task 3.7 内容
+
+**Done**: `/mock/[id]/report` 路由：顶部"整套面试报告" + 平均分 X.X/12 + 返回题库；ScoreBarChart（每题得分柱状图，Y 域 [0, 12]）；2 列布局：左 高光（≥9 题列表 / 空时显示"本场没有满分题——下次冲刺！"），右 短板（rubric 维度均分 < 2，含来源 category）；下方 下一步建议（next_steps ul 列表）+ 逐题汇总（每行链接到 `/report/{drill_id}` 单题报告页）。`pnpm build` 8 routes 成功。
+
+**Files**:
+- New: `frontend/src/components/score-bar-chart.tsx`, `frontend/src/app/mock/[id]/report/page.tsx`
+
+**Decisions / gotchas**:
+- ScoreBarChart 复用 recharts（Task 3.5 装的依赖）；与 RadarChart 同等地位
+- 逐题汇总每行 `Link` 到单题报告页——给"看完整套报告 → 钻进某一题细节"的导航闭环
+- 报告页是 client component，`params Promise` + `use()`，无 useSearchParams 不需 Suspense
+
+**Verify**: `cd frontend && pnpm build` → `Compiled successfully`，8 routes
+
+**Commit**: `caf872c`
+
+### Phase 3 总结
+
+- ✅ 7 个 task 全部完成（Task 3.1-3.7）+ Task 3.6 顺手补的后端 mock endpoints
+- ✅ 后端：52 单测全过；前端：build clean 0 TS error
+- ✅ 8 个前端路由：`/`（上传）→ `/library?session=...`（题库）→ `/drill/[id]`（单题演练，id=question_id）→ `/report/[id]`（单题报告，id=drill_id）/ `/mock?session=...`（mock 入口）→ `/mock/[id]`（mock 驱动）→ `/mock/[id]/report`（整套报告）
+- ✅ 后端新增 endpoints：`POST /mock`, `GET /mock/{id}`, `POST /mock/{id}/advance`, `GET /mock/{id}/report`, `GET /reports/mock/{id}` alias
+- ✅ MockSession 表 + mock_aggregator 模块（按 category / 维度均值聚合，生成 highlights / weaknesses / next_steps 中文文案）
+- ✅ git tag `w3-done`
+
+下一步：进入 **Phase 4 Week 4** —— 评估 + 部署 + 收尾（9 个 task）：
+1. 评估集（5 简历 + 3 JD + pairs.yaml）
+2. relevance judge
+3. user simulator + drilling judge
+4. baseline_compare judge
+5. run_eval.py orchestrator
+6. 跑评估 + 调 prompt 1-2 轮（**这一步需要真 ANTHROPIC_API_KEY**，是 v1 唯一阻塞性的 LLM 调用环节）
+7. backend Dockerfile + Railway 部署
+8. Vercel frontend 部署
+9. README + 简历金句 + 小红书素材
+
+Phase 4 Task 4.6（跑评估调 prompt）和 Task 4.7-4.8（部署）是**用户必须参与**的环节，不能 100% subagent 化——需要 API key + Vercel/Railway 账户。
+
+---
+
 ## 2026-04-27 · Task 3.6 — Mock interview mode (5 题串联)
 
 **Done**: 同时改 backend + frontend。Backend：加 `MockSession` 表（`question_ids` JSON / `drill_attempt_ids` JSON / `current_index` / `status` / 时间戳）+ `routes/mock.py` 4 endpoint（`POST /mock` 起会话挑 5 题优先 5 个不同 category，`GET /mock/{id}`、`POST /mock/{id}/advance` 推进当前 drill_attempt_id 到列表 + index++ + 全完结时 status="ended"，`GET /mock/{id}/report` 拉聚合）+ `agent/mock_aggregator.py` 聚合逻辑（按 category 平均分、识别 highlights ≥9、识别 weakness 维度均值<2 排序、生成 next_steps 文案）+ `/reports/mock/{id}` alias。2 单测全过共 52 passed。Frontend：`/mock` 入口页（自动起会话跳详情）+ `/mock/[id]` 驱动页（依次起 drill / 答 / 答完 advance 到下一题 / 全完跳报告）。`pnpm build` 7 routes。
