@@ -21,6 +21,27 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.7 — Drill API endpoints + persistence
+
+**Done**: 3 个 HTTP endpoint：`POST /drill`（起会话）、`POST /drill/{id}/answer`（推进）、`GET /drill/{id}`（读）。`agent/drill_storage.py` 纯 (de)serialization：`to_snapshot(DrillState) → dict` + `from_snapshot(dict) → DrillState` 互逆。`DrillAttempt` 加 `state_snapshot` JSON 列存完整 state——服务端无状态，每次请求重新 hydrate。题目 ENDED 时：finalize fields (exit_type, total_score) + 非 skip exit 调 `synthesize_exemplar` + 更新 `Question.status`/`best_score`。3 单测全过，全套 49 passed。
+
+**Files**:
+- Modified: `backend/src/mockinterview/db/models.py`（加 `state_snapshot: dict | None`）, `backend/src/mockinterview/main.py`（注册 drill router）
+- New: `backend/src/mockinterview/agent/drill_storage.py`, `backend/src/mockinterview/routes/drill.py`, `backend/tests/test_routes_drill.py`
+
+**Decisions / gotchas**:
+- ⚠️ **SQLite schema migration 限制**：`metadata.create_all()` 跳过已存在的表——给 `drill_attempt` 加 `state_snapshot` 后，老 `data/app.db` 不会自动加列。**任何复用旧 app.db 的人必须删 `backend/data/app.db` 才能拿到新 schema**。Phase 4 部署前考虑 (a) 加 Alembic 迁移工具，或 (b) 文档化"v1 单用户、schema 改动时手动删 db"
+- ⚠️ **测试 DB 隔离问题**：当前 conftest 用 `db.session.engine`（真实 `data/app.db`），不是 in-memory engine——测试会污染 dev DB（创建临时 ResumeSession / Question / DrillAttempt 行）。Code reviewer 之前在 Task 1.2 也提过这个，目前 OK 因为测试都正确清理（每次新建 ResumeSession），但**Task 2.8+ 加更多测试时考虑 conftest 改用 in-memory engine 且 override `get_session` dep**
+- 服务端无状态设计：DrillState 完整 snapshot 进 `state_snapshot` 列，每次 `POST /drill/{id}/answer` 反序列化 → `advance()` → 重新序列化。这样可以水平扩展（Phase 4 部署时不会因为多实例而坏）
+- ENDED 时只对 non-skip exit 合成 exemplar：跳过题没必要给范例答案
+- 题目状态映射：`SKIP` → `SKIPPED`；`>=9` → 之前最高 ≥9 时 `IMPROVED` 否则 `PRACTICED`；其他 → `NEEDS_REDO`
+
+**Verify**: `cd backend && uv run pytest -v` → `49 passed`
+
+**Commit**: `de62e87`
+
+---
+
 ## 2026-04-27 · Task 2.6 — Drill state machine（U-loop 核心 boss task）
 
 **Done**: 写 `agent/drill_loop.py` ~135 行：`DrillState` dataclass（11 字段）+ `DrillStatus` enum + `start_drill(*,question_id,question_text,category,resume_json,original_intent)` 起 session 返初始 state + `advance(state, user_text)` 状态机驱动函数。后者按下面 6 个 exit/redirect 路径之一处理输入：
