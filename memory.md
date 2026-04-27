@@ -21,6 +21,24 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.3 — User simulator + drilling judge
+
+**Done**: `eval/simulators/user_simulator.py` `simulate_answer(client, *, resume, question, transcript)`：LLM 扮"中等质量"候选人答题（rubric 5-7/12 分定位，故意漏 baseline/归因/业务意义），不卡壳/不主动结束/不要求换场景，让 agent 追问质量被实际暴露。`eval/judges/drilling.py` `judge_followup(client, *, question, rubric_dims, last_answer, followup)`：判断面试官某一轮追问是否击中候选人答案最弱维度，返 `{"hit_weakest": bool, "rationale": "..."}`。
+
+**Files**:
+- New: `eval/simulators/__init__.py`, `eval/simulators/user_simulator.py`, `eval/judges/drilling.py`
+
+**Decisions / gotchas**:
+- 模拟用户的"中等质量"刻意校准：太强 agent 没法追问、太弱所有维度都低无法 discriminative
+- 模拟用户**故意不卡壳/不主动结束/不要求换场景**——这条评估专测追问命中率，其他 UX 路径单独评（Phase 4 后续可加）
+- Drilling judge 的 prompt 同样精简，重点是 `hit_weakest` 布尔结果（用于命中率分子分母）
+
+**Verify**: 文件存在；待 Task 4.5 编排时端到端验证
+
+**Commit**: `e393cf2`
+
+---
+
 ## 2026-04-27 · Task 4.2 — Relevance judge
 
 **Done**: `eval/judges/relevance.py` `score_question(client, *, resume, jd, question)` 函数：用 Claude 4.7 给每道生成题打 0-3 分契合度（0=完全无关 / 1=牵强 / 2=相关 / 3=精准引用具体项目）。系统 prompt 带 `cache_control` ephemeral 缓存（同 pair 内多题复用）；resume 截 2000 chars，JD 截 1200 chars 控成本。
