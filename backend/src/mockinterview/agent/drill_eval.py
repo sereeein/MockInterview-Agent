@@ -2,6 +2,10 @@ from typing import Any
 
 from mockinterview.agent.client import build_cached_system, call_json
 from mockinterview.agent.prompts.drill_eval import DRILL_EVAL_SYSTEM, DRILL_EVAL_USER_TEMPLATE
+from mockinterview.agent.prompts.scenario_switch import (
+    SCENARIO_SWITCH_SYSTEM,
+    SCENARIO_SWITCH_USER_TEMPLATE,
+)
 from mockinterview.agent.rubrics import load_rubric
 from mockinterview.schemas.drill import DrillEvalResult, TranscriptTurn
 
@@ -46,3 +50,25 @@ def evaluate_and_followup(
         max_tokens=1024,
     )
     return DrillEvalResult.model_validate(payload)
+
+
+def propose_scenario_switch(
+    *,
+    question_text: str,
+    original_intent: str,
+    last_user_answer: str,
+    prior_switches: int,
+) -> str:
+    system = build_cached_system([SCENARIO_SWITCH_SYSTEM])
+    user = SCENARIO_SWITCH_USER_TEMPLATE.format(
+        question_text=question_text,
+        original_intent=original_intent,
+        last_user_answer=last_user_answer,
+        prior_switches=prior_switches,
+    )
+    payload = call_json(
+        system_blocks=system,
+        messages=[{"role": "user", "content": user}],
+        max_tokens=512,
+    )
+    return payload["prompt"]
