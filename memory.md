@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.1 — Eval dataset curation（Phase 4 起步）
+
+**Done**: 建 `eval/` 评估子项目（uv-managed，与 backend 分离）：5 份合成简历（self_pm/friend_pm/friend_data/anon_ai/anon_other，每份 ~770-960 chars，含 NTU 数据科学硕士 / 字节-腾讯实习 / Shopee 数据科学家 / AI 产品 / 四大咨询五种画像，每份带 SYNTHETIC PLACEHOLDER 注释）+ 3 份合成 JD（PM 字节 / 数据 Shopee / AI alpha）+ pairs.yaml 8 个评估配对（覆盖 4 个 role × JD 有/无变种 + 1 个 PM 跨域 AI alpha 边界 case）+ pyproject.toml（anthropic/pyyaml/pydantic/rich）+ .gitignore（.venv/__pycache__/reports/uv.lock）。`uv sync` 装了 21 个包成功。
+
+**Files**:
+- New: `eval/pyproject.toml`, `eval/.gitignore`, `eval/datasets/pairs.yaml`, `eval/datasets/resumes/{self_pm,friend_pm,friend_data,anon_ai,anon_other}.txt`, `eval/datasets/jds/{pm_bytedance,data_shopee,ai_alpha}.txt`（共 11 文件）
+
+**Decisions / gotchas**:
+- 用户没提供真实简历——先用合成数据让 pipeline 可立即跑；用户面试季再 swap 真实脱敏内容
+- 简历内容刻意贴近真实（带量化结果如"GMV +18%" "AUC 0.83"），让出题引擎的反向挖题能力被实际测到
+- `eval/` 是独立 uv 项目（自己的 pyproject.toml + .venv），不污染 backend
+- `uv.lock` 不入 git（eval 是 dev 工具不部署，锁文件加噪音）
+- 8 个 pair 包含 1 个 cross-domain 边界 case：`pm_alpha_self`（senior PM 简历 vs AI 公司 JD），测出题引擎在简历-JD 不完全对齐时的退化模式
+
+**Verify**: 11 文件 + `eval/.venv/` 安装成功（21 个 deps）；`pairs.yaml` 8 个配对覆盖 4 roles + JD 有/无变种
+
+**Commit**: `4bad10c`
+
+---
+
 ## 2026-04-27 · Phase 3 完成 + Task 3.7 — Mock report page
 
 ### Task 3.7 内容
