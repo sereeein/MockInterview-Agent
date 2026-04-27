@@ -2,6 +2,7 @@ from typing import Any
 
 from mockinterview.agent.client import build_cached_system, call_json
 from mockinterview.agent.prompts.drill_eval import DRILL_EVAL_SYSTEM, DRILL_EVAL_USER_TEMPLATE
+from mockinterview.agent.prompts.prompt_mode import PROMPT_MODE_SYSTEM, PROMPT_MODE_USER_TEMPLATE
 from mockinterview.agent.prompts.scenario_switch import (
     SCENARIO_SWITCH_SYSTEM,
     SCENARIO_SWITCH_USER_TEMPLATE,
@@ -72,3 +73,25 @@ def propose_scenario_switch(
         max_tokens=512,
     )
     return payload["prompt"]
+
+
+def give_thinking_framework(
+    *,
+    category: str,
+    question_text: str,
+    last_user_text: str,
+) -> str:
+    rubric = load_rubric(category)
+    dims = ", ".join(d["label"] for d in rubric["dimensions"])
+    system = build_cached_system([PROMPT_MODE_SYSTEM])
+    user = PROMPT_MODE_USER_TEMPLATE.format(
+        question_text=question_text,
+        dimensions=dims,
+        last_user_text=last_user_text,
+    )
+    payload = call_json(
+        system_blocks=system,
+        messages=[{"role": "user", "content": user}],
+        max_tokens=512,
+    )
+    return payload["hint"]
