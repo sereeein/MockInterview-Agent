@@ -21,6 +21,38 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.6 — Drill state machine（U-loop 核心 boss task）
+
+**Done**: 写 `agent/drill_loop.py` ~135 行：`DrillState` dataclass（11 字段）+ `DrillStatus` enum + `start_drill(*,question_id,question_text,category,resume_json,original_intent)` 起 session 返初始 state + `advance(state, user_text)` 状态机驱动函数。后者按下面 6 个 exit/redirect 路径之一处理输入：
+
+1. **END**（`UserSignal.END`）→ `exit_type=USER_END`，状态机停
+2. **SKIP**（`UserSignal.SKIP`）→ `exit_type=SKIP`，状态机停
+3. **STUCK**（`UserSignal.STUCK`）→ 调 `give_thinking_framework`，加 `kind="prompt_mode"` transcript turn，**不增 followup_rounds**，`prompt_mode_count++`
+4. **SWITCH_SCENARIO**（`UserSignal.SWITCH_SCENARIO` 且 `scenario_switch_count<2`）→ 调 `propose_scenario_switch`，加 `kind="scenario_switch"` turn，**重置 followup_rounds 到 0**，`scenario_switch_count++`
+5. **SOFT exit**（normal answer + `total_score >= 9`）→ `exit_type=SOFT`，状态机停
+6. **HARD_LIMIT**（normal answer + `followup_rounds >= 3`）→ `exit_type=HARD_LIMIT`，状态机停
+
+如果 `scenario_switch_count == 2` 时再触发 SWITCH 信号，**fall through 到 normal eval**（"再换一个"被当作答案让 LLM 评分），budget 不再增加。
+
+9 单测覆盖所有 6 路径 + start_drill 初始化 + budget cap，全套 46 passed。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/drill_loop.py`, `backend/tests/test_drill_loop.py`
+- Modified: `backend/src/mockinterview/agent/user_signals.py`（**Task 2.1 bug fix**：原 SWITCH_SCENARIO 模式要求 `换.*?例子` 或 `换.*?场景`，漏了"能换一个吗"这类常见说法；补加 `r"换一个"`, `r"换个"`, `r"再换"` 三条模式。Task 2.1 原 5 单测仍全过）
+
+**Decisions / gotchas**:
+- 状态机是**纯 logic 模块**，不含持久化/DB 调用；Task 2.7 才接 DB
+- 4 helper（`classify` / `evaluate_and_followup` / `propose_scenario_switch` / `give_thinking_framework`）在 `drill_loop` 模块顶部 import，测试用 `patch("mockinterview.agent.drill_loop.<name>", ...)` mock（不是 patch 原始定义位置）
+- `DrillState` 是 mutable dataclass，`advance()` 直接修改并返回 self；这是状态机习惯用法
+- `_append_user` helper 把 user 消息按当前 `followup_rounds` 编号 append 到 transcript（注意：scenario_switch 路径不增 round，user 消息仍按 round=0 编号）
+- 常量 `MAX_FOLLOWUPS=3`, `MAX_SWITCHES=2`, `SOFT_THRESHOLD=9` 全提到模块顶部，便于 Phase 4 评估调优时改
+
+**Verify**: `cd backend && uv run pytest tests/test_drill_loop.py tests/test_user_signals.py -v` → `14 passed`；全套 `46 passed`
+
+**Commit**: `42ab9ba`
+
+---
+
 ## 2026-04-27 · Task 2.5 — Exemplar answer synthesizer
 
 **Done**: 写 `agent/prompts/exemplar.py`（system 教 agent 用候选人简历素材合成"rubric 高分答案"+3 条具体改进建议）、`agent/exemplar.py`（`synthesize_exemplar(*,category,question_text,resume_json,transcript)` 返 `tuple[str, list[str]]`）。1 单测 mock 通过，全套 37 passed。
