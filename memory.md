@@ -21,6 +21,27 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.5 — run_eval.py orchestrator
+
+**Done**: `eval/run_eval.py` 220 行，把 4.1-4.4 的 dataset / 3 judge / simulator 与 backend 出题引擎串联起来。每个 pair：(1) 读简历 + JD → `parse_resume_text` 调 backend Claude prompt 转结构化 → `generate_questions` 出 12 题；(2) 12 题逐个调 `relevance.score_question` 打契合度；(3) 取前 3 道 T1 题，每题 2 轮模拟 U-loop（`user_simulator.simulate_answer` 中等用户答 + `evaluate_and_followup` agent 评 + `drilling.judge_followup` 判命中最弱）；(4) 第一道 T1 题做 baseline_compare 盲评。每个 LLM 调用都 try/except 兜底，单点失败不影响后续 pair。Markdown 报告写到 `eval/reports/<YYYY-MM-DD>.md`，含 Summary（3 个核心指标 + 阈值）/ Per-pair detail 表 / Raw JSON。
+
+**Files**:
+- New: `eval/run_eval.py`
+
+**Decisions / gotchas**:
+- 跑法：`cd backend && env -u VIRTUAL_ENV uv run python ../eval/run_eval.py`（需 ANTHROPIC_API_KEY）—— backend venv 里跑因为要 import backend modules，eval 自己的 venv 是为子任务（不被这个脚本用）
+- `sys.path.insert` 顺序：backend/src 先（line 19）→ eval/ 后（line 26）—— 否则 backend 模块找不到
+- `parse_resume_text` 故意复用 backend 的 prompt（apples-to-apples eval）—— 评估的是端到端 pipeline 不是某段
+- 每个 pair 估算 LLM 调用：1 (resume parse) + 1 (gen) + 12 (relevance) + 6×3 = 18 (drilling sim+eval+judge) + 3 (baseline compare) ≈ 35 calls/pair；8 pair × 35 = ~280 calls；Opus 4.7 + caching 估 $5-15
+- 已知小坑：(a) `OUT.mkdir(exist_ok=True)` 在 module load 时执行——只 import 也会创建 reports/；(b) `parse_resume_text` 每个 pair 调一次不缓存结构化结果——v1 acceptable，未来若成本敏感可加 disk cache
+- `<placeholder mid-quality answer>` 在 baseline compare 的 ours_pair 生成里——这是有意 stub，让 ours pair 的 first_followup 也由 evaluate_and_followup 产生（与 baseline pair 同样调 LLM 一次），保持公平比较
+
+**Verify**: `import run_eval` 在 backend venv 通过；待 Task 4.6 跑真 API
+
+**Commit**: `a6bd04b`
+
+---
+
 ## 2026-04-27 · Task 4.4 — Baseline comparison judge
 
 **Done**: `eval/judges/baseline_compare.py` 3 函数：(1) `baseline_pair(client,*,resume,jd)` 用裸 Claude（无 rubric / 无种子题库）出题 + 第一轮追问，作为 baseline；(2) `judge_blind(client,*,resume,jd,a_pair,b_pair)` 盲评 A/B 哪个更像真实面试，返 `{winner, rationale}`；(3) `shuffled_label_pair(ours, baseline)` 50/50 随机 A/B 标签让评审无法 pattern match。这是 v1 最强简历金句"vs baseline 盲评胜率 X%"的数据源。
