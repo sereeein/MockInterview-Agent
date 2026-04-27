@@ -21,6 +21,28 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.0.3 — 前端 /setup 页 + localStorage + header 注入
+
+**Done**: 4 个新文件 + 3 修改完成 BYOK 前端门禁。`lib/provider-config.ts` 10 个 PROVIDER_PRESETS（与后端一致：anthropic/openai/deepseek/qwen/zhipu/kimi/wenxin/doubao/gemini/custom，每条带 label/defaultModel/defaultBaseUrl/keyHint/acquireUrl/notes）+ getProviderConfig/setProviderConfig/clearProviderConfig/findPreset，全 SSR-safe（`typeof window === "undefined"` 守卫）。`components/provider-selector.tsx` 卡片网格 picker。`components/provider-header.tsx` 全局顶部"当前 Provider + 切换/重设"badge（无配置时不渲染）。`app/setup/page.tsx` 3 步引导（选 provider → 粘 key → 改 model/base_url），Suspense 包 useSearchParams。`lib/api.ts` 加 `providerHeaders()` 注入 X-Provider/X-API-Key/X-Model/X-Base-URL（jsonRequest + FormData 双路径），收到 401 自动 `window.location.href = /setup?next=...`。`app/layout.tsx` 顶部嵌 ProviderHeader。`app/page.tsx` 加 useEffect 守卫，无配置自动跳 setup。`pnpm build` 9 routes（新增 `/setup`）。
+
+**Files**:
+- New: `frontend/src/lib/provider-config.ts`, `frontend/src/components/{provider-selector,provider-header}.tsx`, `frontend/src/app/setup/page.tsx`
+- Modified: `frontend/src/lib/api.ts`（注 header + 401 重定向）, `frontend/src/app/layout.tsx`（嵌 ProviderHeader）, `frontend/src/app/page.tsx`（无配置守卫）
+
+**Decisions / gotchas**:
+- ⚠️ **前后端 PROVIDER_PRESETS 必须保持同步**：后端 `agent/providers/__init__.py` 改了 preset 名单时，前端 `lib/provider-config.ts` 也要同步改（包括 ProviderKind union）—— 当前 10 条对齐
+- localStorage key `mockinterview.providerConfig` 单点存所有 4 字段；切换 provider 时自动 autofill defaultModel + defaultBaseUrl 但允许用户编辑
+- 401 处理：浏览器跳 `/setup?next=<原路径>`，setup 完后 router.push(next) 回原页面——闭环完整
+- Setup 页 3 步式 Card 布局参考已有 upload 页风格，避免设计割裂
+- 用户的 API key 在 password input 框遮蔽显示 + 不写后端 DB——只浏览器 localStorage + 每请求 header 透传
+- 用 `key.acquireUrl` 给每个 provider 一个"获取 API key"链接，对国内用户尤其友好（不会折在"我没账号怎么办"）
+
+**Verify**: `cd frontend && pnpm build` → 9 routes，build clean
+
+**Commit**: `0f17876`
+
+---
+
 ## 2026-04-27 · Task 4.0.2 — FastAPI dependency + route 集成
 
 **Done**: `routes/_deps.py` 新增 `use_provider(x_provider, x_api_key, x_model, x_base_url)` 依赖：从请求 header 读 4 个字段，缺 X-API-Key 返 401，未知 provider 返 400，否则 `make_provider()` + `set_active()`。把 `Depends(use_provider)` 加到 5 个真正调 agent 的 endpoint：`POST /resume` / `POST /questions/generate` / `POST /drill` / `POST /drill/{id}/answer`（其余 GET/PATCH/list/mock/reports 都是纯 DB 查询不动）。`conftest.py` 用 `app.dependency_overrides[use_provider]` 在测试时跳过 header 检查 + 设 MagicMock provider。**63/63 tests 全过 0 修改**——既有 route 测试早就在 agent 函数 boundary mock 过（parse_resume/generate_questions/synthesize_exemplar etc），MagicMock provider 永远不会被实际调用。
