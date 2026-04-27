@@ -21,6 +21,42 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Phase 4.0 多 provider 改造完成 + Task 4.0.4 — eval 适配 + 文档
+
+### Task 4.0.4 内容
+
+**Done**: `eval/run_eval.py` 加 `_build_provider_from_env()` helper 读 4 个 MOCK_* env vars（MOCK_PROVIDER / MOCK_API_KEY / MOCK_MODEL / MOCK_BASE_URL），main() 起手 `set_active()` 注入 ContextVar；判官（relevance/drilling/baseline_compare）依然固定走 Anthropic 直连（保证 cross-run 可比）。`README.md` 加 BYOK section + 10 provider table + 更新本地 dev 命令（不再要 ANTHROPIC_API_KEY env）。`docs/deployment.md` Task 4.6 分两 recipe：默认 vs 跨 provider eval。`docs/resume-bullets.md` 加 Multi-provider engineering 金句。`docs/xiaohongshu/week4.md` 部署段落改成 BYOK 零自费 API 卖点。新 `docs/byok.md` 一页讲清 BYOK 设计 + 10 provider 列表 + 工程实现要点。**63 backend tests 仍全过 + 前端 build 仍 clean**。
+
+**Files**:
+- Modified: `eval/run_eval.py`, `README.md`, `docs/deployment.md`, `docs/resume-bullets.md`, `docs/xiaohongshu/week4.md`
+- New: `docs/byok.md`
+
+**Decisions / gotchas**:
+- ⚠️ **Eval 判官固定 Anthropic**：用户 BYOK 但跑 eval 时仍需 ANTHROPIC_API_KEY（用于 LLM-as-judge）+ MOCK_API_KEY（agent under test）。换句话说，跑 eval 是开发者验证 prompt 质量的工具，**不是**给小红书读者用的功能
+- 这条做产品决策时考虑过：把 judge 也参数化会破坏 cross-run 可比性（"用 GLM 判 Claude" vs "用 Claude 判 Claude"指标值不可对比）
+- README 把 BYOK section 放在 Architecture 后、Eval 前——读者先理解技术框架再看用法
+- byok.md 单文件足够独立，可以单独发小红书或当 issue 模板
+
+**Verify**: `cd backend && env -u VIRTUAL_ENV uv run pytest -v` → `63 passed`；`cd frontend && pnpm build` → success
+
+**Commit**: `230086d`
+
+### Phase 4.0 总结
+
+- ✅ 4 个 sub-task 全部完成（4.0.1 后端抽象、4.0.2 route deps、4.0.3 前端 setup、4.0.4 eval+docs）
+- ✅ 后端单测 52 → 63（+11 provider tests），所有既有测试 0 修改通过
+- ✅ 前端 build clean，9 routes（含新 `/setup`）
+- ✅ 10 provider 支持：anthropic/openai/deepseek/qwen/zhipu/kimi/wenxin/doubao/gemini/custom
+- ✅ 用户 key 永不进服务器：localStorage + 每请求 X-* header 透传
+- ✅ Eval pipeline 兼容 BYOK（agent 可换 provider，judge 固定 Anthropic）
+- ✅ 简历金句 + 小红书 + README + byok.md 都同步更新
+
+整体改造工作量：约 8-10 hours subagent 工时（4 task × 25-50k token dispatches）。**v1 现在可以放心上 GitHub 给陌生人用**。
+
+下一步：用户驱动的 Task 4.6 / 4.7 / 4.8（跑 eval / 部署后端 / 部署前端）。具体步骤见 `docs/deployment.md`。
+
+---
+
 ## 2026-04-27 · Task 4.0.3 — 前端 /setup 页 + localStorage + header 注入
 
 **Done**: 4 个新文件 + 3 修改完成 BYOK 前端门禁。`lib/provider-config.ts` 10 个 PROVIDER_PRESETS（与后端一致：anthropic/openai/deepseek/qwen/zhipu/kimi/wenxin/doubao/gemini/custom，每条带 label/defaultModel/defaultBaseUrl/keyHint/acquireUrl/notes）+ getProviderConfig/setProviderConfig/clearProviderConfig/findPreset，全 SSR-safe（`typeof window === "undefined"` 守卫）。`components/provider-selector.tsx` 卡片网格 picker。`components/provider-header.tsx` 全局顶部"当前 Provider + 切换/重设"badge（无配置时不渲染）。`app/setup/page.tsx` 3 步引导（选 provider → 粘 key → 改 model/base_url），Suspense 包 useSearchParams。`lib/api.ts` 加 `providerHeaders()` 注入 X-Provider/X-API-Key/X-Model/X-Base-URL（jsonRequest + FormData 双路径），收到 401 自动 `window.location.href = /setup?next=...`。`app/layout.tsx` 顶部嵌 ProviderHeader。`app/page.tsx` 加 useEffect 守卫，无配置自动跳 setup。`pnpm build` 9 routes（新增 `/setup`）。
