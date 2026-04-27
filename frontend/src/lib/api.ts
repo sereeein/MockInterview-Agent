@@ -1,3 +1,12 @@
+import type {
+  DrillResponse,
+  MockReport,
+  MockSession,
+  Question,
+  ResumeUploadResponse,
+  SingleReport,
+} from "./types";
+
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export class ApiError extends Error {
@@ -20,7 +29,7 @@ function isJsonBody(body: BodyInit | null | undefined): boolean {
   return true; // string body — assume JSON
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+async function jsonRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...(isJsonBody(init?.body) ? { "Content-Type": "application/json" } : {}),
     ...((init?.headers as Record<string, string>) ?? {}),
@@ -38,6 +47,84 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  return jsonRequest<T>(path, init);
+}
+
 export async function health(): Promise<{ status: string }> {
-  return api("/health");
+  return jsonRequest("/health");
+}
+
+export async function uploadResume(
+  file: File,
+  role_type: string,
+  jd_text?: string,
+  company_name?: string
+): Promise<ResumeUploadResponse> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("role_type", role_type);
+  if (jd_text) fd.append("jd_text", jd_text);
+  if (company_name) fd.append("company_name", company_name);
+  const r = await fetch(`${BASE}/resume`, { method: "POST", body: fd });
+  if (!r.ok) {
+    let body: unknown;
+    try {
+      body = await r.json();
+    } catch {
+      body = await r.text();
+    }
+    throw new ApiError(r.status, body);
+  }
+  return r.json();
+}
+
+export async function generateQuestions(resume_session_id: number): Promise<Question[]> {
+  return jsonRequest("/questions/generate", {
+    method: "POST",
+    body: JSON.stringify({ resume_session_id }),
+  });
+}
+
+export async function listQuestions(
+  resume_session_id: number,
+  filters?: { category?: string; status?: string }
+): Promise<Question[]> {
+  const p = new URLSearchParams({ resume_session_id: String(resume_session_id) });
+  if (filters?.category) p.set("category", filters.category);
+  if (filters?.status) p.set("status", filters.status);
+  return jsonRequest(`/questions?${p.toString()}`);
+}
+
+export async function startDrill(question_id: number): Promise<DrillResponse> {
+  return jsonRequest("/drill", {
+    method: "POST",
+    body: JSON.stringify({ question_id }),
+  });
+}
+
+export async function answerDrill(drill_id: number, text: string): Promise<DrillResponse> {
+  return jsonRequest(`/drill/${drill_id}/answer`, {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
+}
+
+export async function getDrillReport(drill_id: number): Promise<SingleReport> {
+  return jsonRequest(`/reports/drill/${drill_id}`);
+}
+
+export async function startMock(resume_session_id: number): Promise<MockSession> {
+  return jsonRequest("/mock", {
+    method: "POST",
+    body: JSON.stringify({ resume_session_id }),
+  });
+}
+
+export async function getMock(mock_id: number): Promise<MockSession> {
+  return jsonRequest(`/mock/${mock_id}`);
+}
+
+export async function getMockReport(mock_id: number): Promise<MockReport> {
+  return jsonRequest(`/reports/mock/${mock_id}`);
 }
