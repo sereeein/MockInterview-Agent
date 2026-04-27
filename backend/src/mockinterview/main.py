@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from mockinterview.config import get_settings
 from mockinterview.db.session import init_db
+from mockinterview.routes import drill as drill_routes
 from mockinterview.routes import questions as questions_routes
 from mockinterview.routes import resume as resume_routes
 
@@ -27,6 +28,7 @@ app.add_middleware(
 
 app.include_router(resume_routes.router)
 app.include_router(questions_routes.router)
+app.include_router(drill_routes.router)
 
 
 @app.get("/health")

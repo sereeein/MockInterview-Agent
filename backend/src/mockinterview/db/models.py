@@ -65,6 +65,7 @@ class DrillAttempt(SQLModel, table=True):
     followup_rounds: int = 0
     exemplar_answer: str
     improvement_suggestions: list[str] = Field(sa_column=Column(JSON))
+    state_snapshot: dict[str, Any] | None = Field(default=None, sa_column=Column(JSON))
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     ended_at: datetime | None = None
 
