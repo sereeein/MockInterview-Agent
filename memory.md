@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.2 — Drill eval module（U-loop 大脑）
+
+**Done**: 写 `agent/prompts/drill_eval.py`（system + user template）、`schemas/drill.py`（`DrillEvalResult` 4 字段 + `TranscriptTurn` 默认 `kind="normal"`）、`agent/drill_eval.py`（`evaluate_and_followup(category, question_text, transcript)` 单 LLM 调用 + `_format_rubric` / `_format_transcript` 两个私有 helper）。1 单测 mock 通过，全套 34 passed。
+
+**Files**:
+- New: `backend/src/mockinterview/{schemas/drill,agent/prompts/drill_eval,agent/drill_eval}.py`, `backend/tests/test_drill_eval.py`
+
+**Decisions / gotchas**:
+- 一次 LLM 调用同时输出 `{scores, total_score, weakest_dimension, weakness_diagnosis, next_followup}` —— 这是 U-loop 状态机每一轮的核心驱动
+- `_format_transcript` 输出格式 `[round] 面试官/候选人 [tag]: text`，`kind` 字段未来会被 Task 2.3-2.4 的 scenario_switch / prompt_mode tag 利用
+- ⚠️ **小坑（不阻塞）**：`DRILL_EVAL_SYSTEM` 里的 `{{...}}` JSON schema 示例其实**没必要**双花括号——这个常量只走 `build_cached_system`，不经 `.format()`。Claude 会看到字面 `{{` `}}`，应该仍能输出正确单花括号 JSON（指令明确"严格按 JSON schema 输出"），但 prompt 文本读起来怪。**Phase 4 评估时若 JSON 解析率不达标再修**
+- `_format_rubric` 利用 Task 1.7 的 YAML 结构（`dimensions[].key/label/description` + `score_levels` dict）—— 跨 task 复用 config，不重复硬编码
+- `transcript` 数据流方向：Task 2.6 状态机维护 `list[TranscriptTurn]`，每次 user 答完后传给本模块；返回的 `next_followup` 又被状态机 append 回 transcript
+
+**Verify**: `cd backend && uv run pytest tests/test_drill_eval.py -v` → `1 passed`；全套 `34 passed`
+
+**Commit**: `fa7373b`
+
+---
+
 ## 2026-04-27 · Task 2.1 — User signal classifier（Phase 2 起步）
 
 **Done**: `agent/user_signals.py` ~30 行纯正则分类器：5 类信号（END / SKIP / STUCK / SWITCH_SCENARIO / ANSWER fallback），按 `_PATTERNS` 列表顺序匹配（SKIP > STUCK > SWITCH_SCENARIO > END > ANSWER）。5 单测全过。
