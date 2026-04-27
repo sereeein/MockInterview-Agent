@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.4 — Baseline comparison judge
+
+**Done**: `eval/judges/baseline_compare.py` 3 函数：(1) `baseline_pair(client,*,resume,jd)` 用裸 Claude（无 rubric / 无种子题库）出题 + 第一轮追问，作为 baseline；(2) `judge_blind(client,*,resume,jd,a_pair,b_pair)` 盲评 A/B 哪个更像真实面试，返 `{winner, rationale}`；(3) `shuffled_label_pair(ours, baseline)` 50/50 随机 A/B 标签让评审无法 pattern match。这是 v1 最强简历金句"vs baseline 盲评胜率 X%"的数据源。
+
+**Files**:
+- New: `eval/judges/baseline_compare.py`
+
+**Decisions / gotchas**:
+- 标签随机 shuffle 是盲评 validity 的关键——否则 judge LLM 可能 systematic bias 倾向某一侧
+- baseline 故意用极简 prompt（"基于简历+JD 提问"），不传任何 rubric / 种子题库 / 5 类题型分布——对比的是 vertical agent 设计 vs 通用对话能力
+- 跑评估时 (Task 4.5)：每个 pair 调一次 baseline_pair + 一次 judge_blind = 2 次 LLM 调用，加上 ours_pair（来自 backend 出题引擎）
+- 模型选 Opus 4.7 评审（不降级到 Sonnet）—— 评估 validity 比成本重要
+
+**Verify**: 文件存在，3 函数齐；待 Task 4.5 端到端验证
+
+**Commit**: `de821fb`
+
+---
+
 ## 2026-04-27 · Task 4.3 — User simulator + drilling judge
 
 **Done**: `eval/simulators/user_simulator.py` `simulate_answer(client, *, resume, question, transcript)`：LLM 扮"中等质量"候选人答题（rubric 5-7/12 分定位，故意漏 baseline/归因/业务意义），不卡壳/不主动结束/不要求换场景，让 agent 追问质量被实际暴露。`eval/judges/drilling.py` `judge_followup(client, *, question, rubric_dims, last_answer, followup)`：判断面试官某一轮追问是否击中候选人答案最弱维度，返 `{"hit_weakest": bool, "rationale": "..."}`。
