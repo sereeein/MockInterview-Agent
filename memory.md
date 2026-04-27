@@ -21,6 +21,42 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Phase 1 完成 + Task 1.10 — POST /questions/generate + CRUD
+
+### Task 1.10 内容
+
+**Done**: 写 `routes/questions.py` 4 个 endpoint：`POST /questions/generate`（404 if session 不存在 / 502 if 出题引擎返空 / 200 + 12 道题入库）、`GET /questions`（按 resume_session_id + 可选 category/status 筛选）、`GET /questions/{id}`、`PATCH /questions/{id}/status`。`schemas/api.py` 提供 `QuestionRead` / `GenerateRequest` / `QuestionStatusUpdate` 三个 API-shaped Pydantic 模型（与 db.models.Question 字段对齐但独立）。5 单测覆盖 happy path / category 筛选 / PATCH 改状态 / 空列表 502 guard / 未知 session 404。
+
+**Files**:
+- New: `backend/src/mockinterview/{schemas/api,routes/questions}.py`, `backend/tests/test_routes_questions.py`
+- Modified: `backend/src/mockinterview/main.py`（注册 questions router）
+
+**Decisions / gotchas**:
+- 已落实 Task 1.9 review flag 的"空列表 guard"——LLM 返 0 题时返 502 而不是 sliently 返 200 + 空列表
+- `QuestionRead` 与 `Question` ORM 字段一一对齐，但不共用——API schema 与 DB schema 解耦，未来字段重命名/新增时不影响外部契约
+- 跳过 subagent review（pattern 与 Task 1.6 routes/resume.py 完全一致，且 5 单测含 happy/error/edge）
+
+**Verify**: `cd backend && uv run pytest -v` → `28 passed in 0.07s`
+
+**Commit**: `4b9b165`
+
+### Phase 1 总结
+
+- ✅ 10 个 task 全部完成（Task 1.1-1.10）
+- ✅ 28 单测全过；前端 `pnpm build` 通过
+- ✅ Backend 完整链路：上传简历 PDF → pdfplumber 抽文本 → Claude 结构化解析 → ResumeSession 入库 → question gen engine 出 12 题 → Question 表入库 → CRUD 可读可改
+- ✅ git tag `w1-done`
+- ⏳ 未做（有意推迟）：
+  - 真 e2e smoke test（需真 ANTHROPIC_API_KEY + 真 PDF）——用户首次面试季用时跑一遍即可
+  - 30 题/岗位完整种子库 curation——v1.5 / 用户面试季补
+  - 微小 cleanup：`_format_seeds` 里的 magic 12（题库扩到 ≥30 时此切片才生效）、api.ts 里的 "string body 视为 JSON" 约定 JSDoc
+
+**14 个 commit 含 Phase 1**：8d7fbbf → 4594dfc → e093c6b → 924b92e → 2cae489 → 33b3044 → f8c18f1 → f611300 → 38a8ceb → 1fb174e → 8d53925 → 4b9b165 + 4 个 memory log + 1 个 init/.gitignore
+
+下一步：进入 **Phase 2 Week 2** —— U-loop 单题核心（最重的一周，8 个 task：user signal classifier / drill eval / scenario switch / prompt mode / exemplar / state machine / drill API / single-question report endpoint）。
+
+---
+
 ## 2026-04-27 · Task 1.9 — Question generation engine（Phase 1 核心）
 
 **Done**: 写 `agent/prompts/question_gen.py`（~50 行 Chinese system prompt + `ROLE_LABEL` + `ROLE_ANGLE` 4 岗位查表 + user template）、`schemas/question.py`（`Category`/`Difficulty` Literal 类型 + `GeneratedQuestion`/`QuestionList` 模型）、`agent/question_gen.py`（`generate_questions(*,role,resume_json,jd_text,company_name)` 单 LLM 调用 + structured output；私有 `_distribution(has_jd)` 返 {T1:4,T2:2,T3:3,T4:2,T5:1}=12 / 无 JD 时 {T1:5,T2:3,T3:0,T4:2,T5:1}=11）。2 单测覆盖 happy path + 无 JD 分布分支。
