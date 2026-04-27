@@ -1,0 +1,22 @@
+role: data
+description: 数据科学 / 数据分析 / ML 工程类岗位通用 T4 题库种子
+# v1 ships with 6 seed questions; user will expand to ~30 during own job-hunt season.
+questions:
+  - text: 你想验证"新推荐策略提升了用户停留时长"，A/B 实验怎么设计？样本量怎么估？
+    angle: 实验设计
+    difficulty: medium
+  - text: 一个分类模型 AUC 0.85 但线上 CTR 只升了 0.3%，可能的原因有哪些？
+    angle: 模型业务对齐
+    difficulty: hard
+  - text: 给你一张订单表，怎么用 SQL 算"过去 30 天连续下单 3 天的用户数"？
+    angle: SQL 思路
+    difficulty: medium
+  - text: 用户分群项目里你选 K-means，为什么不选 DBSCAN？分群质量怎么验证？
+    angle: 方法选择 + 验证
+    difficulty: medium
+  - text: 一个 metric 在某天突然下跌 20%，你的排查流程是什么？
+    angle: 异常归因
+    difficulty: medium
+  - text: 给"用户流失预测模型"设计监控告警，至少 5 个维度。
+    angle: 模型监控
+    difficulty: hard

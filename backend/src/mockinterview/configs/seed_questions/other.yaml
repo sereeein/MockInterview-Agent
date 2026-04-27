@@ -1,0 +1,13 @@
+role: other
+description: 通用兜底（非核心岗位走通用 STAR + 行为题）
+# v1 ships with 3 seed questions for the fallback role.
+questions:
+  - text: 描述一次你在团队中体现领导力的经历。
+    angle: 行为题
+    difficulty: easy
+  - text: 你最有成就感的项目是什么？为什么？
+    angle: 行为题
+    difficulty: easy
+  - text: 描述一次你做过的最艰难的决策。
+    angle: 决策 + 反思
+    difficulty: medium

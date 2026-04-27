@@ -1,0 +1,22 @@
+role: pm
+description: PM / AI 产品类岗位通用 T4 题库种子（北极星指标、case、决策框架）
+# v1 ships with 6 seed questions; user will expand to ~30 during own job-hunt season.
+questions:
+  - text: 如果让你为小红书 App 的"日活"定义北极星指标，你会怎么定？为什么？
+    angle: 北极星指标定义
+    difficulty: medium
+  - text: 一个新功能上线后留存涨了 5%，但 GMV 跌了 3%，你怎么决策是否继续推全？
+    angle: trade-off 决策
+    difficulty: hard
+  - text: 设计一个评估"通知推送质量"的指标体系，至少 5 个层次。
+    angle: 指标体系拆解
+    difficulty: medium
+  - text: 用户提需求"加一个 X 按钮"，你怎么判断是否要做？给出完整决策流程。
+    angle: 需求评估
+    difficulty: easy
+  - text: 描述一次你拒绝了高 priority 需求方的请求的经历——理由、过程、结果。
+    angle: trade-off 决策 + 沟通
+    difficulty: medium
+  - text: 如果让你做一款给老年人的视频 App，第一个版本你会保留 / 砍掉哪 3 个功能？理由？
+    angle: 用户洞察 + MVP 决策
+    difficulty: hard

@@ -1,0 +1,22 @@
+role: ai
+description: AI 产品 / AI 工程岗 T4 题库种子
+# v1 ships with 6 seed questions; user will expand to ~30 during own job-hunt season.
+questions:
+  - text: 你怎么评估一个 LLM-based 客服 agent 的"是否好用"？给出指标体系。
+    angle: AI 产品评估
+    difficulty: hard
+  - text: 一个 RAG 系统在测试集上 recall 0.9，上线后用户反馈"答非所问" 30% 案例，可能的原因？
+    angle: hallucination & 评估对齐
+    difficulty: hard
+  - text: 给你一个文档问答场景，你会怎么决定用 fine-tune 还是 RAG 还是 prompt engineering？
+    angle: 方案选择
+    difficulty: medium
+  - text: 设计一个 LLM agent 的安全护栏，至少 5 个层次。
+    angle: 安全 & 风险
+    difficulty: hard
+  - text: 数据规模化是 AI 产品最大坑之一。你做过哪个 AI 产品时遇到了数据规模化挑战？
+    angle: 数据规模化
+    difficulty: medium
+  - text: 一个 AI 写作助手的 retention 不行，你会从哪 5 个角度排查？
+    angle: AI 产品 retention
+    difficulty: medium
