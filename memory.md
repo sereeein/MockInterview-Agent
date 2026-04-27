@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.8 — Seed question banks (pm/data/ai/other)
+
+**Done**: 写 4 份种子题库 YAML（pm/data/ai 各 6 题、other 3 题），覆盖 北极星 / case / trade-off / 实验设计 / SQL / metric / AI eval / RAG / 通用行为题等角度。`agent/seed_bank.py` 12 行 loader（同 rubrics.py 风格，lru_cache + ROLES 列表）。5 单测全过（4 parametrized + 1 unknown role）。
+
+**Files**:
+- New: `backend/src/mockinterview/configs/seed_questions/{pm,data,ai,other}.yaml`, `backend/src/mockinterview/agent/seed_bank.py`, `backend/tests/test_seed_bank.py`
+
+**Decisions / gotchas**:
+- 用户选择 plan 折中方案 C：v1 只 ship 6 题/核心岗位（不补到 30），剩余 24 题/岗位的 curation 推到 v1.5 / 用户面试季补
+- 各岗位 6 题已覆盖至少 5-6 个不同 angle tag，T4 题型生成器从这里抽样作为候选池
+- lru_cache 返回的是同一个 list 引用——下游消费方不应 mutate；目前无任何代码 mutate，OK
+- 同样跳过 subagent review（pure content + 12 行 loader），21/21 全套测试过即可
+
+**Verify**: `cd backend && uv run pytest -v` → `21 passed`
+
+**Commit**: `1fb174e`
+
+---
+
 ## 2026-04-27 · Task 1.7 — 5 Rubric YAML configs
 
 **Done**: 写 5 份 YAML（`backend/src/mockinterview/configs/rubrics/{t1_star,t2_quant,t3_jd_align,t4_structured,t5_motivation}.yaml`），每份含 category / name / 4 dimensions（key + label + description）/ score_levels（0-3）/ threshold_complete=9。`agent/rubrics.py` 12 行 loader：`load_rubric(category)` 带 lru_cache + `all_rubrics()` 返 5 份。2 测试全过。
