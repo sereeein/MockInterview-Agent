@@ -21,6 +21,28 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 1.9 — Question generation engine（Phase 1 核心）
+
+**Done**: 写 `agent/prompts/question_gen.py`（~50 行 Chinese system prompt + `ROLE_LABEL` + `ROLE_ANGLE` 4 岗位查表 + user template）、`schemas/question.py`（`Category`/`Difficulty` Literal 类型 + `GeneratedQuestion`/`QuestionList` 模型）、`agent/question_gen.py`（`generate_questions(*,role,resume_json,jd_text,company_name)` 单 LLM 调用 + structured output；私有 `_distribution(has_jd)` 返 {T1:4,T2:2,T3:3,T4:2,T5:1}=12 / 无 JD 时 {T1:5,T2:3,T3:0,T4:2,T5:1}=11）。2 单测覆盖 happy path + 无 JD 分布分支。
+
+**Files**:
+- New: `backend/src/mockinterview/{schemas/question,agent/prompts/question_gen,agent/question_gen}.py`, `backend/tests/test_question_gen.py`
+
+**Decisions / gotchas**:
+- System prompt 末尾的 `{{"questions": [...]}}` 是有意 `.format()` 转义——单 `{` 是 placeholder, 双 `{{` 是 literal。10 个 placeholder × format() 一次成型，跑通验证
+- `generate_questions` keyword-only（`*,`）：避免 Task 1.10 路由层位置参数漂移
+- `build_cached_system([system])` 把 .format 后的 system prompt 包成单 block 列表，自动给最后一块加 `cache_control={"type":"ephemeral"}` —— 简历 + JD 不变时缓存命中
+- `json.dumps(resume_json, ensure_ascii=False, indent=2)` 中文不被转义、缩进 2 让 Claude 易解析（成本可接受）
+- `has_jd = bool(jd_text and jd_text.strip())` 同时处理 None/空串/空白
+- ⚠️ **Task 1.10 路由层注意**：`QuestionList.questions = Field(default_factory=list)` 是宽松验证——若 model 输出 `{"questions": []}` 也会通过；route 层应加长度 ≥ 1 守卫，或在 API 边界返 500 + 重试
+- 已知小 cleanup（不阻塞）：`_format_seeds` 里的 `max(n*5, 12)` 是为更大题库设计的，当前 6 题/岗位下 slicing 实际是 no-op；当题库扩到 30 时此切片才生效
+
+**Verify**: `cd backend && uv run pytest tests/test_question_gen.py -v` → `2 passed`；全套 `23 passed`
+
+**Commit**: `8d53925`
+
+---
+
 ## 2026-04-27 · Task 1.8 — Seed question banks (pm/data/ai/other)
 
 **Done**: 写 4 份种子题库 YAML（pm/data/ai 各 6 题、other 3 题），覆盖 北极星 / case / trade-off / 实验设计 / SQL / metric / AI eval / RAG / 通用行为题等角度。`agent/seed_bank.py` 12 行 loader（同 rubrics.py 风格，lru_cache + ROLES 列表）。5 单测全过（4 parametrized + 1 unknown role）。
