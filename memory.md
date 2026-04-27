@@ -21,6 +21,25 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.5 — Exemplar answer synthesizer
+
+**Done**: 写 `agent/prompts/exemplar.py`（system 教 agent 用候选人简历素材合成"rubric 高分答案"+3 条具体改进建议）、`agent/exemplar.py`（`synthesize_exemplar(*,category,question_text,resume_json,transcript)` 返 `tuple[str, list[str]]`）。1 单测 mock 通过，全套 37 passed。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/prompts/exemplar.py`, `backend/src/mockinterview/agent/exemplar.py`, `backend/tests/test_exemplar.py`
+
+**Decisions / gotchas**:
+- 这是 U-loop 5 个 building block 的最后一个。Task 2.6 状态机会在题目结束时（soft / hard_limit / user_end exit，**不含 skip**）调用本 helper
+- 单独 `agent/exemplar.py` 模块（不并入 drill_eval.py）—— 避免 drill_eval.py 膨胀，保持单一职责
+- 验证了 `.format(resume_json=json.dumps(...))` 不会因 JSON 内容含 `{` `}` 报错——`str.format` 不会重处理已替换的值
+- 维度展示用 `label (description)` 比单 label 更详细（不像 Task 2.4 prompt mode 怕泄漏评分标准——这里题目已结束，给出范例答案的目的就是展示标准）
+
+**Verify**: `cd backend && uv run pytest tests/test_exemplar.py -v` → `1 passed`；全套 `37 passed`
+
+**Commit**: `29df382`
+
+---
+
 ## 2026-04-27 · Task 2.4 — Prompt mode (思考框架)
 
 **Done**: 写 `agent/prompts/prompt_mode.py`（system 教 agent "卡壳时不追问、不给答案，只给思考框架"），在 `agent/drill_eval.py` 追加 `give_thinking_framework(*,category,question_text,last_user_text)`：从 rubric 取 4 维度 label 拼成"维度1, 维度2, ..."传给 LLM，返字符串 hint。1 单测 mock 通过，全套 36 passed。
