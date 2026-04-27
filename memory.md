@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 3.1 — TS types + complete API client（Phase 3 起步）
+
+**Done**: `frontend/src/lib/types.ts` 10 个 type 与 backend Pydantic schema 一一对应（Category/Difficulty/RoleType/QuestionStatus/ExitType + ResumeUploadResponse/Question/TranscriptTurn/DrillResponse/SingleReport/Rubric/RubricDimension/MockSession/MockReport）。`frontend/src/lib/api.ts` 重写：保留 ApiError + isJsonBody（Task 1.6 修复），加 `jsonRequest<T>` 内部 helper，加 10 个 typed wrapper（uploadResume / generateQuestions / listQuestions / startDrill / answerDrill / getDrillReport / startMock / getMock / getMockReport + 保留 api/health）。`pnpm build` 0 TS error 通过。
+
+**Files**:
+- New: `frontend/src/lib/types.ts`
+- Modified: `frontend/src/lib/api.ts`
+
+**Decisions / gotchas**:
+- mock 相关 3 个 wrapper（`startMock` / `getMock` / `getMockReport`）和 2 个 type（`MockSession` / `MockReport`）引用了**还不存在**的后端 endpoint——Task 3.6 才加后端。前端先提前定义保持一致编译，是 plan 有意安排
+- `uploadResume` 故意绕过 `jsonRequest`：FormData 上传需要浏览器自动管理 multipart Content-Type 边界，不能注 `application/json` 头
+- 类型对齐验证：backend 的 datetime 序列化为 ISO string → frontend 用 `string` 而非 `Date`；nullable 字段（best_score / last_attempt_at）用 `T | null`
+- 用户简历 PDF（`吴亦菲_简历_南洋理工大学_27届.pdf`）在 repo root 未入 git——后续考虑 `.gitignore` 加 `*.pdf` 防止意外提交简历隐私
+
+**Verify**: `cd frontend && pnpm build` → `Compiled successfully in 1.4s`
+
+**Commit**: `334e8b9`
+
+---
+
 ## 2026-04-27 · Phase 2 完成 + Task 2.8 — Single-question report endpoint
 
 ### Task 2.8 内容
