@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 3.2 — Upload page
+
+**Done**: 替换 `frontend/src/app/page.tsx` 的占位为 4 段式上传表单：UploadZone（拖拽 + click，仅接 PDF）+ RoleSelector（4 卡片：产品/数据/AI/其他）+ JD textarea（可选）+ 公司 input（可选）。提交按钮在 file && role 都填后激活，busy 时显示"解析中…可能需要 30-60 秒"，错误用 `text-destructive` 红色。成功后 `router.push("/library?session={id}")`（route Task 3.3 加）。`pnpm build` 1.1s 0 错误。
+
+**Files**:
+- Modified: `frontend/src/app/page.tsx`
+- New: `frontend/src/components/role-selector.tsx`, `frontend/src/components/upload-zone.tsx`
+
+**Decisions / gotchas**:
+- 复用已有 shadcn primitives（Button/Input/Label/Textarea）+ 已装的 `cn` util，无需 `pnpm dlx shadcn add`
+- UploadZone 拖拽视觉反馈：`dragOver` state + Tailwind `border-primary bg-primary/5`
+- 提交流程内联了 `uploadResume` + `generateQuestions` 两个 API 串联——简化首屏 UX，不需要中间状态页面
+- /library 路由不存在（Task 3.3 加）——点击"开始挖题"目前会 404 后跳转，build 不报错（Next.js 16 客户端路由 lazy）
+
+**Verify**: `cd frontend && pnpm build` → `Compiled successfully in 1104ms`
+
+**Commit**: `27b3b04`
+
+---
+
 ## 2026-04-27 · Task 3.1 — TS types + complete API client（Phase 3 起步）
 
 **Done**: `frontend/src/lib/types.ts` 10 个 type 与 backend Pydantic schema 一一对应（Category/Difficulty/RoleType/QuestionStatus/ExitType + ResumeUploadResponse/Question/TranscriptTurn/DrillResponse/SingleReport/Rubric/RubricDimension/MockSession/MockReport）。`frontend/src/lib/api.ts` 重写：保留 ApiError + isJsonBody（Task 1.6 修复），加 `jsonRequest<T>` 内部 helper，加 10 个 typed wrapper（uploadResume / generateQuestions / listQuestions / startDrill / answerDrill / getDrillReport / startMock / getMock / getMockReport + 保留 api/health）。`pnpm build` 0 TS error 通过。
