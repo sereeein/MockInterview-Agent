@@ -2,7 +2,9 @@
 
 垂直岗位 AI 面试演练 · 简历反向挖题 · 多轮追问 · 场景切换 UX。
 
-**Live**: _TBD — see `docs/deployment.md`_
+**Live**: https://mockinterview-agent.vercel.app
+
+**Backend API**: https://mockinterview-backend-production.up.railway.app（Swagger 在 `/docs`）
 
 ## What it does
 - 上传简历 PDF + 选岗位（PM / 数据 / AI / 其他）+ 可选 JD

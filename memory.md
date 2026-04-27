@@ -21,6 +21,37 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 4.7 + 4.8 — 生产部署上线 v1
+
+**Done**:
+- **Backend on Railway**: `https://mockinterview-backend-production.up.railway.app`
+  - Service `mockinterview-backend` + Volume 挂 `/data`（SQLite 持久化）
+  - 环境变量：`DB_URL=sqlite:////data/app.db`（Dockerfile 内置）+ `CORS_ORIGINS` 指向 Vercel URL
+  - **不设 ANTHROPIC_API_KEY**——BYOK 架构，用户自带 key 走 X-API-Key header
+- **Frontend on Vercel**: `https://mockinterview-agent.vercel.app`
+  - 项目 link 到 sereeeins-projects/mockinterview-agent
+  - `NEXT_PUBLIC_API_URL` 指向 Railway URL（build-time 注入）
+
+**Files**:
+- New: `backend/Dockerfile`, `backend/.dockerignore`
+- Modified: `backend/pyproject.toml`（加 `[tool.hatch.build.targets.wheel] packages = ["src/mockinterview"]`），`backend/uv.lock`（重新生成），`README.md`（填 Live URL）
+
+**Decisions / gotchas**:
+- ⚠️ **第一次 Railway build 失败**：hatchling 找不到 package。修复用两步：(a) Dockerfile 改为 `COPY src` 在 `uv sync` **之前**——hatchling 需要 src 目录存在才能确定 package 位置；(b) pyproject.toml 显式声明 `[tool.hatch.build.targets.wheel] packages = ["src/mockinterview"]` 避免 heuristic 失败
+- ⚠️ **CORS 不能用 `https://*.vercel.app` 通配**：CORSMiddleware + `allow_credentials=True` 必须 exact origin 匹配。改为列出 2 个稳定 URL（`mockinterview-agent.vercel.app` + `mockinterview-agent-sereeeins-projects.vercel.app`）；PR preview URL（含 hash）需要时手动加
+- Dockerfile CMD 用 `sh -c "uvicorn ... --port ${PORT:-8000}"` —— Railway 动态分配 PORT，必须 shell 展开；如果用 exec form `["uvicorn", ..., "--port", "$PORT"]` 不行
+- Volume `/data` 在 Railway 单实例方案下足够；未来上量切 Postgres 时 schema 已经 ORM 化，迁移成本低
+- Vercel build-env：`vercel env add NEXT_PUBLIC_API_URL production` 必须在 `vercel --prod` 之前设——NEXT_PUBLIC_* 是 build-time baked，不是 runtime
+
+**Verify**:
+- `curl https://mockinterview-backend-production.up.railway.app/health` → `{"status":"ok"}` ✓
+- `curl -X OPTIONS .../health -H "Origin: https://mockinterview-agent.vercel.app"` → `200 OK` + `access-control-allow-origin: https://mockinterview-agent.vercel.app` ✓
+- 15 endpoint 全部在 OpenAPI spec 中暴露 ✓
+
+**Commit**: 待和 README + tag v1.0 一起 commit
+
+---
+
 ## 2026-04-27 · Task 4.6 — 评估跑通（含坑总结）
 
 **Done**: 跑完 8 pair × ~35 LLM calls 的自动评估，写入 `eval/reports/2026-04-27.md`。
