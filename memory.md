@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 2.3 — Scenario switch helper（D 灵魂）
+
+**Done**: 写 `agent/prompts/scenario_switch.py`（system 教 agent "释放场景维度，保留考察意图"；user template 输入题面/原意图/最后答案/已切换次数），在 `agent/drill_eval.py` 追加 `propose_scenario_switch(*,question_text,original_intent,last_user_answer,prior_switches)` 单 LLM 调用返字符串 prompt。1 单测 mock 通过，全套 35 passed 无回归。
+
+**Files**:
+- New: `backend/src/mockinterview/agent/prompts/scenario_switch.py`, `backend/tests/test_scenario_switch.py`
+- Modified: `backend/src/mockinterview/agent/drill_eval.py`（追加 import + 1 function，不动原有代码）
+
+**Decisions / gotchas**:
+- 这是 v1 区别于通用对话工具的核心 UX：agent 主动识别"用户例子撑不住考察意图"时给台阶（"换个项目里的例子？"），不放弃考察意图但允许换场景维度
+- 触发方有两种：用户主动（Task 2.1 classify 出 SWITCH_SCENARIO 信号）+ agent 主动（Task 2.6 状态机检测某轮 rubric 总分极低 + diagnosis 提示"例子撑不住"时调用）
+- 函数签名 keyword-only（`*,`）：未来 Task 2.6 会按名传 4 个参数，避免位置漂移
+- prompt 里的 JSON 示例 `{"prompt": "..."}` 是单花括号——`SCENARIO_SWITCH_SYSTEM` 不经过 `.format()`，单花括号正确（同 2.2 的 nuance）
+
+**Verify**: `cd backend && uv run pytest tests/test_scenario_switch.py -v` → `1 passed`；全套 `35 passed`
+
+**Commit**: `033885f`
+
+---
+
 ## 2026-04-27 · Task 2.2 — Drill eval module（U-loop 大脑）
 
 **Done**: 写 `agent/prompts/drill_eval.py`（system + user template）、`schemas/drill.py`（`DrillEvalResult` 4 字段 + `TranscriptTurn` 默认 `kind="normal"`）、`agent/drill_eval.py`（`evaluate_and_followup(category, question_text, transcript)` 单 LLM 调用 + `_format_rubric` / `_format_transcript` 两个私有 helper）。1 单测 mock 通过，全套 34 passed。
