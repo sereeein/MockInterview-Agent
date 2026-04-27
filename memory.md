@@ -21,6 +21,30 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 3.6 — Mock interview mode (5 题串联)
+
+**Done**: 同时改 backend + frontend。Backend：加 `MockSession` 表（`question_ids` JSON / `drill_attempt_ids` JSON / `current_index` / `status` / 时间戳）+ `routes/mock.py` 4 endpoint（`POST /mock` 起会话挑 5 题优先 5 个不同 category，`GET /mock/{id}`、`POST /mock/{id}/advance` 推进当前 drill_attempt_id 到列表 + index++ + 全完结时 status="ended"，`GET /mock/{id}/report` 拉聚合）+ `agent/mock_aggregator.py` 聚合逻辑（按 category 平均分、识别 highlights ≥9、识别 weakness 维度均值<2 排序、生成 next_steps 文案）+ `/reports/mock/{id}` alias。2 单测全过共 52 passed。Frontend：`/mock` 入口页（自动起会话跳详情）+ `/mock/[id]` 驱动页（依次起 drill / 答 / 答完 advance 到下一题 / 全完跳报告）。`pnpm build` 7 routes。
+
+**Files**:
+- Modified: `backend/src/mockinterview/db/models.py`（+ MockSession 表）, `backend/src/mockinterview/routes/reports.py`（+ /reports/mock/{id} alias）, `backend/src/mockinterview/main.py`（注册 mock router）
+- New: `backend/src/mockinterview/routes/mock.py`, `backend/src/mockinterview/agent/mock_aggregator.py`, `backend/tests/test_routes_mock.py`, `frontend/src/app/mock/page.tsx`, `frontend/src/app/mock/[id]/page.tsx`
+
+**Decisions / gotchas**:
+- 新增表（不是改现有表的列）—— SQLite `metadata.create_all` 自动加新表，**不需要删 app.db**（与 Task 2.7 的 `state_snapshot` 加列那次不同）
+- 起会话挑题策略：先按 status / id 排序得到候选，**第一阶段**优先挑 5 个不同 category（保证 mock 覆盖广），**第二阶段**用其余题填到 5 道凑齐
+- 聚合规则：highlights = total_score ≥ 9 的题列表；weaknesses = rubric 维度均分 < 2 的，按 avg 排序取前 5；next_steps = top 3 weakness 拼成"重点重练 [类目] 中维度「key」（均值 X.X/3）"中文文案
+- ⚠️ Driver 页指向 `/mock/{id}/report`——Task 3.7 补
+- 入口页 `useSearchParams` 包了 Suspense；driver 用 `params Promise` 不需 Suspense
+- mock_aggregator 的 `weaknesses` 排序后取前 5：避免维度过多导致报告杂乱
+
+**Verify**:
+- `cd backend && uv run pytest -v` → `52 passed`
+- `cd frontend && pnpm build` → `Compiled successfully`，7 routes
+
+**Commit**: `7139cc1`
+
+---
+
 ## 2026-04-27 · Task 3.5 — Single-question report page (radar chart)
 
 **Done**: 装 `recharts ^3.8.1`（与 React 19.2.4 无 peer dep 冲突）。`/report/[id]` 路由（id = drill_id）：顶部 题目 + category + 退出方式/追问轮数/场景切换次数/求提示次数信息条 + "返回题库" 按钮；2 列布局：左 RadarChart（rubric 4 维度评分，0-3 域）+ 总分（X/12 + 优秀/良好/合格/需改进 评级），右 改进建议 ol；下方 范例答案 Card（whitespace-pre-wrap）+ 完整 transcript（TranscriptView 包 ChatInterface）。`pnpm build` 5 路由成功。
