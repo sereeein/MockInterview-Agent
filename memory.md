@@ -21,6 +21,26 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-27 · Task 3.5 — Single-question report page (radar chart)
+
+**Done**: 装 `recharts ^3.8.1`（与 React 19.2.4 无 peer dep 冲突）。`/report/[id]` 路由（id = drill_id）：顶部 题目 + category + 退出方式/追问轮数/场景切换次数/求提示次数信息条 + "返回题库" 按钮；2 列布局：左 RadarChart（rubric 4 维度评分，0-3 域）+ 总分（X/12 + 优秀/良好/合格/需改进 评级），右 改进建议 ol；下方 范例答案 Card（whitespace-pre-wrap）+ 完整 transcript（TranscriptView 包 ChatInterface）。`pnpm build` 5 路由成功。
+
+**Files**:
+- New: `frontend/src/app/report/[id]/page.tsx`, `frontend/src/components/radar-chart.tsx`, `frontend/src/components/transcript-view.tsx`
+- Modified: `frontend/package.json`（+ recharts ^3.8.1）, `frontend/pnpm-lock.yaml`
+
+**Decisions / gotchas**:
+- 评级阈值与 spec §6.1 对齐：≥11 优秀 / ≥9 良好（软退出阈值）/ ≥6 合格 / else 需改进
+- RadarChart `"use client"`（recharts 是 client-only），所以 `/report/[id]` 路由是动态（`ƒ`）—— SSR 不渲染 chart，CSR 才出
+- TranscriptView 是 ChatInterface 的薄 wrapper，目的是给 report 页面留布局灵活性（未来可以切换 transcript 渲染样式）
+- recharts 3.x 与 React 19 兼容性：装的时候 0 warning，build clean——稳
+
+**Verify**: `cd frontend && pnpm build` → `Compiled successfully`，5 routes（含新 `/report/[id]`）
+
+**Commit**: `aef4044`
+
+---
+
 ## 2026-04-27 · Task 3.4 — Drill page (chat UI)
 
 **Done**: `/drill/[id]` 路由（id = question_id，进页面后调 `startDrill` 起 session）。`ChatInterface` 组件：消息气泡（user 右对齐 primary 色 / agent 左对齐 muted 色）+ 自动滚动（`useEffect` on transcript）+ scenario_switch 加 amber ring + prompt_mode 加 blue ring + 顶部 emoji 标签（"↔ 换场景" / "💡 思考框架"）。底部 Textarea + 4 个快捷按钮（跳过 / 换场景 / 求提示 / 结束）—— 按钮**只填充输入框**不直接发送（用户可编辑后再发）。题目 ENDED 后 1.2s 跳 `/report/{drill_id}`。`pnpm build` 4 路由成功。
