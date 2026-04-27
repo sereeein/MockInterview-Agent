@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,16 +8,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { RoleSelector } from "@/components/role-selector";
 import { UploadZone } from "@/components/upload-zone";
 import { generateQuestions, uploadResume } from "@/lib/api";
+import { getProviderConfig } from "@/lib/provider-config";
 import type { RoleType } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
+  const [hasConfig, setHasConfig] = useState<boolean | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [role, setRole] = useState<RoleType | null>(null);
   const [jd, setJD] = useState("");
   const [company, setCompany] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const cfg = getProviderConfig();
+    if (!cfg) {
+      router.replace("/setup?next=/");
+      setHasConfig(false);
+    } else {
+      setHasConfig(true);
+    }
+  }, [router]);
 
   async function start() {
     if (!file || !role) {
@@ -35,6 +47,13 @@ export default function Home() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (hasConfig === null) {
+    return <main className="container py-12">加载……</main>;
+  }
+  if (hasConfig === false) {
+    return null;
   }
 
   return (

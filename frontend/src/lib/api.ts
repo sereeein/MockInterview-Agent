@@ -6,6 +6,7 @@ import type {
   ResumeUploadResponse,
   SingleReport,
 } from "./types";
+import { getProviderConfig } from "./provider-config";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -26,12 +27,33 @@ function isJsonBody(body: BodyInit | null | undefined): boolean {
   if (body instanceof Blob) return false;
   if (body instanceof URLSearchParams) return false;
   if (body instanceof ArrayBuffer) return false;
-  return true; // string body — assume JSON
+  return true;
+}
+
+function providerHeaders(): Record<string, string> {
+  const cfg = getProviderConfig();
+  if (!cfg) return {};
+  const h: Record<string, string> = {
+    "X-Provider": cfg.provider,
+    "X-API-Key": cfg.apiKey,
+  };
+  if (cfg.model) h["X-Model"] = cfg.model;
+  if (cfg.baseUrl) h["X-Base-URL"] = cfg.baseUrl;
+  return h;
+}
+
+function redirectToSetupOnAuthFailure(status: number): void {
+  if (typeof window === "undefined") return;
+  if (status === 401) {
+    const next = window.location.pathname + window.location.search;
+    window.location.href = `/setup?next=${encodeURIComponent(next)}`;
+  }
 }
 
 async function jsonRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...(isJsonBody(init?.body) ? { "Content-Type": "application/json" } : {}),
+    ...providerHeaders(),
     ...((init?.headers as Record<string, string>) ?? {}),
   };
   const r = await fetch(`${BASE}${path}`, { ...init, headers });
@@ -42,6 +64,7 @@ async function jsonRequest<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       body = await r.text();
     }
+    redirectToSetupOnAuthFailure(r.status);
     throw new ApiError(r.status, body);
   }
   return r.json() as Promise<T>;
@@ -66,7 +89,11 @@ export async function uploadResume(
   fd.append("role_type", role_type);
   if (jd_text) fd.append("jd_text", jd_text);
   if (company_name) fd.append("company_name", company_name);
-  const r = await fetch(`${BASE}/resume`, { method: "POST", body: fd });
+  const r = await fetch(`${BASE}/resume`, {
+    method: "POST",
+    body: fd,
+    headers: providerHeaders(),
+  });
   if (!r.ok) {
     let body: unknown;
     try {
@@ -74,6 +101,7 @@ export async function uploadResume(
     } catch {
       body = await r.text();
     }
+    redirectToSetupOnAuthFailure(r.status);
     throw new ApiError(r.status, body);
   }
   return r.json();
