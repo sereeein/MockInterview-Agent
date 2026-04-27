@@ -4,13 +4,18 @@ from sqlmodel import Session, select
 from mockinterview.agent.question_gen import generate_questions
 from mockinterview.db.models import Question, QuestionStatus, ResumeSession
 from mockinterview.db.session import get_session
+from mockinterview.routes._deps import use_provider
 from mockinterview.schemas.api import GenerateRequest, QuestionRead, QuestionStatusUpdate
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 
 
 @router.post("/generate", response_model=list[QuestionRead])
-def generate(req: GenerateRequest, db: Session = Depends(get_session)):
+def generate(
+    req: GenerateRequest,
+    db: Session = Depends(get_session),
+    _: None = Depends(use_provider),
+):
     rs = db.get(ResumeSession, req.resume_session_id)
     if not rs:
         raise HTTPException(404, "resume_session not found")

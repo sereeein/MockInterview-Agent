@@ -9,6 +9,7 @@ from mockinterview.agent.drill_storage import from_snapshot, to_snapshot
 from mockinterview.agent.exemplar import synthesize_exemplar
 from mockinterview.db.models import DrillAttempt, Question, QuestionStatus, ResumeSession
 from mockinterview.db.session import get_session
+from mockinterview.routes._deps import use_provider
 
 router = APIRouter(prefix="/drill", tags=["drill"])
 
@@ -51,7 +52,11 @@ def _serialize(d: DrillAttempt) -> DrillResponse:
 
 
 @router.post("", response_model=DrillResponse)
-def start(body: StartDrillBody, db: Session = Depends(get_session)):
+def start(
+    body: StartDrillBody,
+    db: Session = Depends(get_session),
+    _: None = Depends(use_provider),
+):
     q = db.get(Question, body.question_id)
     if not q:
         raise HTTPException(404, "question not found")
@@ -85,7 +90,12 @@ def start(body: StartDrillBody, db: Session = Depends(get_session)):
 
 
 @router.post("/{drill_id}/answer", response_model=DrillResponse)
-def answer(drill_id: int, body: AnswerBody, db: Session = Depends(get_session)):
+def answer(
+    drill_id: int,
+    body: AnswerBody,
+    db: Session = Depends(get_session),
+    _: None = Depends(use_provider),
+):
     d = db.get(DrillAttempt, drill_id)
     if not d:
         raise HTTPException(404, "drill not found")

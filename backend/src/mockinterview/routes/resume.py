@@ -5,6 +5,7 @@ from mockinterview.agent.resume_parser import ResumeParseError, parse_resume
 from mockinterview.config import get_settings
 from mockinterview.db.models import ResumeSession
 from mockinterview.db.session import get_session
+from mockinterview.routes._deps import use_provider
 
 router = APIRouter(prefix="/resume", tags=["resume"])
 
@@ -18,6 +19,7 @@ def upload_resume(
     jd_text: str | None = Form(None),
     company_name: str | None = Form(None),
     db: Session = Depends(get_session),
+    _: None = Depends(use_provider),
 ) -> dict:
     if role_type not in ALLOWED_ROLES:
         raise HTTPException(400, f"role_type must be one of {ALLOWED_ROLES}")
