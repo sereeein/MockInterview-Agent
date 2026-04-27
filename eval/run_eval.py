@@ -2,7 +2,19 @@
 
 Usage:
     cd backend && env -u VIRTUAL_ENV uv run python ../eval/run_eval.py
-    (Backend env required since we import its modules.)
+
+Env vars:
+    ANTHROPIC_API_KEY   — required (for the LLM-as-judge "ruler")
+    MOCK_PROVIDER       — agent-under-test provider (default: anthropic)
+    MOCK_API_KEY        — agent provider key (default: same as ANTHROPIC_API_KEY when MOCK_PROVIDER=anthropic)
+    MOCK_MODEL          — override default model
+    MOCK_BASE_URL       — override default base_url (only relevant for OpenAI-compat providers / custom)
+
+Example for testing how the agent performs with DeepSeek:
+    ANTHROPIC_API_KEY=sk-ant-...
+    MOCK_PROVIDER=deepseek
+    MOCK_API_KEY=sk-deepseek-...
+    cd backend && env -u VIRTUAL_ENV uv run python ../eval/run_eval.py
 """
 import json
 import statistics
@@ -208,10 +220,35 @@ def write_report(results: list[dict]) -> Path:
     return path
 
 
+def _build_provider_from_env() -> "LLMProvider":
+    """Read MOCK_PROVIDER / MOCK_API_KEY / MOCK_MODEL / MOCK_BASE_URL from env.
+    Default: anthropic + ANTHROPIC_API_KEY (backward compat).
+    """
+    import os
+    provider = os.environ.get("MOCK_PROVIDER", "anthropic")
+    api_key = (
+        os.environ.get("MOCK_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY", "")
+    )
+    if not api_key:
+        raise SystemExit(
+            "Set MOCK_API_KEY (or ANTHROPIC_API_KEY for default Anthropic) before running eval."
+        )
+    model = os.environ.get("MOCK_MODEL") or None
+    base_url = os.environ.get("MOCK_BASE_URL") or None
+    from mockinterview.agent.providers import make_provider
+    return make_provider(provider=provider, api_key=api_key, model=model, base_url=base_url)
+
+
 def main() -> None:
+    from mockinterview.agent.providers import set_active
+    set_active(_build_provider_from_env())
+
     pairs = yaml.safe_load((DATA / "pairs.yaml").read_text())["pairs"]
-    client = Anthropic()
-    results = [run_pair(client, p) for p in pairs]
+    # The judges/simulator still use a raw Anthropic client because their prompts are tuned for Claude.
+    # Backend agent code (parse_resume_text, generate_questions, evaluate_and_followup) goes through the active provider.
+    judge_client = Anthropic()  # judges still need ANTHROPIC_API_KEY for fair comparison
+    results = [run_pair(judge_client, p) for p in pairs]
     path = write_report(results)
     console.print(f"[green]Report written[/green]: {path}")
 

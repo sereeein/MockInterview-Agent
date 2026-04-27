@@ -4,8 +4,9 @@
 
 ## Task 4.6 — Run eval
 
-**Pre-req**: `ANTHROPIC_API_KEY` (Anthropic console).
+**Pre-req**: `ANTHROPIC_API_KEY` (always — for the LLM-as-judge ruler).
 
+**Default (agent uses Anthropic)**:
 ```bash
 cd /Users/evette/Documents/MockInterview_Agent
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -13,10 +14,22 @@ cd backend
 env -u VIRTUAL_ENV uv run python ../eval/run_eval.py
 ```
 
-Expect:
+**Test agent on a different provider** (e.g. DeepSeek):
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export MOCK_PROVIDER=deepseek
+export MOCK_API_KEY=sk-deepseek-...
+# Optional: export MOCK_MODEL=deepseek-chat
+cd backend
+env -u VIRTUAL_ENV uv run python ../eval/run_eval.py
+```
+
+Why two keys? The "judge" must be consistent across runs (we use Anthropic Claude as the impartial ruler). The "agent under test" can be any provider — that's the point of multi-provider support.
+
+Expected:
 - 8 pairs × ~35 LLM calls = ~280 calls
-- Runtime: 5-15 min
-- Cost: $5-15 (with prompt caching)
+- Runtime: 5-15 min (depends on agent provider's latency)
+- Cost: $5-15 with Anthropic+caching; varies for other providers
 - Output: `eval/reports/<YYYY-MM-DD>.md`
 
 **If eval fails midway**: each pair is independent; partial reports still get written. Re-run = fresh report (file overwritten).

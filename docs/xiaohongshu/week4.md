@@ -16,7 +16,7 @@
 - 追问命中率 **<X>%**（目标 ≥ 70%）
 - vs 裸 Claude 盲评胜率 **<X>%**（目标 ≥ 70%）
 
-**部署**：前端 Vercel + 后端 Railway，prompt caching 让真实成本可接受。
+**部署 + BYOK**：前端 Vercel + 后端 Railway，**整个项目零自费 API**——每个用户用自己的 key（Anthropic / OpenAI / DeepSeek / 千问 / 智谱 / Kimi / 文心 / 豆包 / Gemini / 自定义 10 选 1）。所以你打开 demo 的链接也能直接试用，前提是你愿意贡献自己的 key。
 
 **给同样想做求职项目的朋友 3 条建议**：
 1. 先想垂直化策略（只服务 PM/数据/AI 比通用面试工具更值钱）

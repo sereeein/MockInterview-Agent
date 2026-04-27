@@ -24,6 +24,10 @@
 - 4-week solo build: spec → 4-phase plan → backend (FastAPI + Anthropic SDK + SQLModel) + frontend (Next.js 16 + shadcn) + automated eval pipeline + Vercel/Railway deploy. 50+ unit tests, prompt caching for 70%+ cost savings.
 - Stateless server design: drill state persisted as JSON snapshot column on `drill_attempt` table; horizontally scalable from day 1.
 
+**Multi-provider engineering**:
+- Designed BYOK (Bring Your Own Key) architecture: ContextVar-based provider abstraction in backend (`anthropic.py` / `openai_compat.py` / `gemini.py`); frontend collects user's key on `/setup` and forwards as `X-API-Key` header per request; key never persists server-side. Supports 10 providers (Anthropic / OpenAI / DeepSeek / 千问 / 智谱 / Kimi / 文心 / 豆包 / Gemini / custom OpenAI-compat).
+- One adapter (`OpenAICompatibleProvider`) covers 7 Chinese LLM providers via OpenAI-compatible base_url substitution — minimizes integration code for国内用户 onboarding.
+
 ## Real interview命中率（v1 后持续追踪）
 
 > Living metric — fill after own job-hunt season:
