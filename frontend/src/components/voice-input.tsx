@@ -25,7 +25,11 @@ type Props = {
  *  pending portion. If the user edits during recording, interim text may stop
  *  being detected as a suffix and stay in place — acceptable trade-off. */
 export function VoiceInput({ value, onChange, disabled }: Props) {
-  const [supported] = useState(() => detectSpeechSupport());
+  // Defer detectSpeechSupport() to useEffect so SSR and client first paint
+  // both render null (avoids hydration mismatch — SSR sees no `window`,
+  // client sees SpeechRecognition API). After mount, run the check and
+  // re-render with the real support state.
+  const [supported, setSupported] = useState<ReturnType<typeof detectSpeechSupport> | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +37,11 @@ export function VoiceInput({ value, onChange, disabled }: Props) {
   const interimRef = useRef("");
   const valueRef = useRef(value);
   valueRef.current = value;
+
+  // Detect support post-mount (skips hydration mismatch)
+  useEffect(() => {
+    setSupported(detectSpeechSupport());
+  }, []);
 
   // Auto-fade error after 3s
   useEffect(() => {
@@ -52,8 +61,10 @@ export function VoiceInput({ value, onChange, disabled }: Props) {
     };
   }, []);
 
+  // Pre-detection (SSR + first client paint): render nothing
+  if (!supported) return null;
   if (!supported.supported) {
-    // Don't render the button at all — graceful degradation.
+    // Definitely unsupported (Firefox / HTTP) — graceful degradation
     return null;
   }
 
