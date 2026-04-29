@@ -51,7 +51,7 @@ const MOCKS: { label: string; state: ConnectionTestState }[] = [
         category: "auth",
         http_status: 401,
         provider_message:
-          "Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011CaXw36yQE4phtw8c1YDRj'}",
+          "Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_xxxxxxxxxxxxxxxxxxxxxx'}",
         elapsed_ms: 473,
       }),
     },
@@ -114,7 +114,7 @@ function mock(p: Partial<ProviderTestResult>): ProviderTestResult {
 export default function ConnectionTestShowcase() {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ConnectionTestState | null>(null);
-  const [secret, setSecret] = useState("sk-test-12345");
+  const [secret, setSecret] = useState("");
 
   return (
     <main className="container max-w-2xl mx-auto py-12 space-y-8">

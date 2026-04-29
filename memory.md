@@ -66,7 +66,11 @@
   8. 点「删除」→ confirm → card 消失
   9. 切语音语言 → DevTools 查看 `mockinterview.uiPrefs` 立即更新
 
-**Commit hash**: `330f5f0`
+**Commit hash**: `330f5f0` + fixup `<待填>`
+
+**T4 fixup（用户反馈后修补）**：
+1. **card 点击 UX bug**：原版只有 inline icon button 可点，整张 card 不响应。改成「点 card body → 自动 setActive() + openEdit() 同时发生」（master-detail 体验，正是用户期望的「点击配置切换」）。Inline button 加 `e.stopPropagation()` 避免冒泡到 card click。删除冗余的「使用」「编辑」icon button（语义已被整张 card 接管），剩 3 个：默认/测试/删除
+2. **dev showcase 安全清理**：`/dev/connection-test/page.tsx` 的 `secret = "sk-test-12345"` 改空串；mock 里的真 Anthropic request_id `req_011CaXw36yQE4phtw8c1YDRj`（来自 T2 真 API smoke 测试）改成 `req_xxxxxxxxxxxxxxxxxxxxxx`。**审计 git grep 确认无任何真 key 落入代码**——key 永远只在用户浏览器 localStorage，与 git 仓库完全分离两层。用户担心的「推 GitHub 泄漏 key」物理上不可能发生
 
 **下一步**：等用户确认 → T5 前端语音输入（lib/speech.ts + voice-input 组件 + drill/mock 集成）
 

@@ -3,9 +3,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
-  Check,
   Download,
-  Edit3,
   Plus,
   Star,
   Trash2,
@@ -384,12 +382,20 @@ function SetupView() {
                   : cfg.lastTestStatus === "fail"
                     ? "bg-destructive"
                     : "bg-muted-foreground/40";
+              const isEditing = editor?.id === cfg.id;
               return (
                 <Card
                   key={cfg.id}
+                  onClick={() => {
+                    // Click anywhere on the card body → switch active + open in editor.
+                    // Inline icon buttons stopPropagation so they fire their own action only.
+                    if (!isActive) onUseCard(cfg);
+                    openEdit(cfg);
+                  }}
                   className={cn(
-                    "border transition-colors",
+                    "border transition-colors cursor-pointer hover:bg-muted/30",
                     isActive && "ring-2 ring-primary",
+                    isEditing && !isActive && "ring-2 ring-primary/40",
                   )}
                 >
                   <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
@@ -412,31 +418,14 @@ function SetupView() {
                     )}
                   </CardHeader>
                   <CardContent className="flex flex-wrap gap-1 pt-0">
-                    {!isActive && (
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        onClick={() => onUseCard(cfg)}
-                        aria-label="使用此配置"
-                      >
-                        <Check />
-                        使用
-                      </Button>
-                    )}
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => openEdit(cfg)}
-                      aria-label="编辑"
-                    >
-                      <Edit3 />
-                      编辑
-                    </Button>
                     {!isDefault && (
                       <Button
                         size="xs"
                         variant="outline"
-                        onClick={() => onSetDefaultCard(cfg)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSetDefaultCard(cfg);
+                        }}
                         aria-label="设为默认"
                       >
                         <Star />
@@ -446,7 +435,10 @@ function SetupView() {
                     <Button
                       size="xs"
                       variant="outline"
-                      onClick={() => runTest(cfg)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        runTest(cfg);
+                      }}
                       aria-label="测试连接"
                     >
                       <Zap />
@@ -455,9 +447,12 @@ function SetupView() {
                     <Button
                       size="xs"
                       variant="ghost"
-                      onClick={() => onDeleteCard(cfg)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteCard(cfg);
+                      }}
                       aria-label="删除"
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10 ml-auto"
                     >
                       <Trash2 />
                     </Button>
@@ -475,7 +470,7 @@ function SetupView() {
               <CardContent className="py-12 text-center text-sm text-muted-foreground">
                 {store.configs.length === 0
                   ? "👈 点左侧「新建」创建第一组配置"
-                  : "👈 点左侧某组配置「编辑」，或「新建」一组"}
+                  : "👈 点左侧任一卡片可同时切换并编辑，或「新建」一组"}
               </CardContent>
             </Card>
           ) : (
