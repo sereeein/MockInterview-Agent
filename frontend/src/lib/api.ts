@@ -6,7 +6,7 @@ import type {
   ResumeUploadResponse,
   SingleReport,
 } from "./types";
-import { getProviderConfig } from "./provider-config";
+import { getActiveConfig } from "./provider-config";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -31,7 +31,7 @@ function isJsonBody(body: BodyInit | null | undefined): boolean {
 }
 
 function providerHeaders(): Record<string, string> {
-  const cfg = getProviderConfig();
+  const cfg = getActiveConfig();
   if (!cfg) return {};
   const h: Record<string, string> = {
     "X-Provider": cfg.provider,

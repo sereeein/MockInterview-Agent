@@ -21,6 +21,41 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 T1 — 前端数据模型升级（multi-config + ui-prefs）
+
+**任务**：v1.1 计划的 T1，把 v1.0 的单 config localStorage 升级成多 config store + UI 偏好表
+
+**设计文档**：[`docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md`](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md) §5 T1
+
+**做了什么**：
+- 重写 `frontend/src/lib/provider-config.ts`：保留 `PROVIDER_PRESETS` / `findPreset` 不动；新增 `SavedConfig` / `ProviderConfigStore` 类型 + 全套 CRUD（`getStore` / `setStore` / `addConfig` / `updateConfig` / `deleteConfig` / `setActive` / `setDefault` / `recordTestResult` / `getActiveConfig`）；保留 v1.0 旧 export（`getProviderConfig` / `setProviderConfig` / `clearProviderConfig`）作 deprecated shim 委托给新 store
+- 新建 `frontend/src/lib/ui-prefs.ts`：`UiPrefs.speechLang`（zh-CN / zh-TW / en-US）+ `getUiPrefs` / `setUiPrefs` / `patchUiPrefs`
+- 修改 `frontend/src/lib/api.ts`：`providerHeaders()` 从 `getProviderConfig` 改读 `getActiveConfig`（一行 import + 一行函数体）
+- 新增 `frontend/scripts/smoke-t1.mts`：Node 22 strip-types 跑的独立 smoke（7 项）
+
+**关键决策**：
+- **localStorage migration 策略**：v1.0 旧 key `mockinterview.providerConfig` 不删（保留 90 天回滚兜底），新 key `mockinterview.providerStore` 在 `getStore()` 首次调用时静默迁移单 config → 多 config 数组（默认配置名 "默认配置"，自动设为 active + default）
+- **更新凭据字段自动重置 testStatus**：仅当 `provider/apiKey/model/baseUrl` 任一字段变化才重置；改 `name` 不重置（避免重命名后假状态丢失）
+- **deleteConfig fallback 链**：删 active → 优先 fallback 到 defaultId（如果还存在）→ 否则取 remaining 第一个 → 都没了置 null
+- **smoke 用 Node 22 `--experimental-strip-types`** 而非新引入 vitest/tsx 依赖（v1.1 不引入测试框架，沿用 v1.0 节奏）
+
+**改动的文件**：
+- Modified: `frontend/src/lib/provider-config.ts`（重写为多 config + 保留 v1.0 shim）
+- Modified: `frontend/src/lib/api.ts`（providerHeaders 读 active）
+- New: `frontend/src/lib/ui-prefs.ts`
+- New: `frontend/scripts/smoke-t1.mts`
+
+**验证方式**：
+- `cd frontend && npx tsc --noEmit` → exit 0
+- `cd frontend && node --experimental-strip-types --no-warnings scripts/smoke-t1.mts` → 7/7 pass
+  - 覆盖：empty / 旧 v1.0 migration / addConfig / setActive / setDefault / updateConfig 字段感知 reset / deleteConfig fallback / v1.0 shim / ui-prefs
+
+**Commit hash**: 待填（commit 后回填）
+
+**下一步**：等用户确认 → T2 后端 `/provider/test` endpoint
+
+---
+
 ## 2026-04-29 · v1.0 收尾 — 全部资产清单 + Phase 5 待办（next session 起点）
 
 **v1.0 状态**：✅ 已 ship。git tag `v1.0` 已 push 到 GitHub。
