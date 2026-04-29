@@ -21,6 +21,35 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 push complete + session 收尾
+
+**push 状态**：✅ 完成
+- `git push origin main` → 19 commits 上线
+- `git push origin v1.1` → tag 上线
+- GitHub: https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.1
+
+**部署状态**：
+- ✅ **Vercel frontend** auto-deploy：HTTP 200 已验（推送后约 2-3 min 完成）
+  - https://mockinterview-agent.vercel.app/setup 已是 v1.1 UI
+- ⏳ **Railway backend** auto-deploy：本次验证时仍 404 `/provider/test`（push 后约 5-10 min 才完成 Python build）
+  - 用户下次访问需手动 verify：`curl -X POST https://mockinterview-backend-production.up.railway.app/provider/test` → 期望 401「missing X-API-Key header」（不是 404）
+  - 期间用户可继续用 local 8002 backend（bg id `bi2yzwhsk`，可用 `pkill -f "uvicorn mockinterview"` 停）
+
+**v1.1 → v1.2 之间**：
+- v1.2 候选清单（按优先级）：
+  1. **interim 文字浅灰染色**：textarea 重写为 contentEditable
+  2. **30s 失焦自动停录音**：通过 forwardRef 让 VoiceInput 拿到 textarea ref
+  3. **BYOK Whisper 云 STT 兜底**：T5 留的 C 升级口子（X-STT-Provider header + 后端 /audio/transcribe endpoint）
+  4. **TTS 朗读题目**（Web Speech Synthesis）：v1.1 因机械音色风险未做
+  5. **Token usage 仪表盘**：Phase 5 P0 早已立项，跨 10 provider 字段 normalization 是独立设计课题
+  6. **Live URL 上挂上「v1.1 changelog」link**：方便用户看新 feature
+- 其他 v1.0 Phase 5 P0 待办（v1.0 收尾 entry 列出）：移动端 hamburger menu / Token usage / 错误更精确分类（v1.1 已部分解决：连接测试错误已分 5 类）
+- 学习指南补充：[docs/learning-guide.md](docs/learning-guide.md) 当前是 v1.0 描述，加 v1.1 章节是 v1.2 候选
+
+**下一 session 起点**：用户会换新窗口接续。本 entry 是 single source of truth。
+
+---
+
 ## 2026-04-29 · v1.1 ship 🚢 — 多组配置 / 连接测试 / 语音输入 全部上线
 
 **v1.1 状态**：✅ 已 ship。git tag `v1.1` 已 push 到 GitHub（待 push 确认）。
