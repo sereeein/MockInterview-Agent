@@ -50,7 +50,7 @@
 - `cd frontend && node --experimental-strip-types --no-warnings scripts/smoke-t1.mts` → 7/7 pass
   - 覆盖：empty / 旧 v1.0 migration / addConfig / setActive / setDefault / updateConfig 字段感知 reset / deleteConfig fallback / v1.0 shim / ui-prefs
 
-**Commit hash**: 待填（commit 后回填）
+**Commit hash**: `1b85282`
 
 **下一步**：等用户确认 → T2 后端 `/provider/test` endpoint
 
