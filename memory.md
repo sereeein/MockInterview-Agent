@@ -66,7 +66,7 @@
   8. 点「删除」→ confirm → card 消失
   9. 切语音语言 → DevTools 查看 `mockinterview.uiPrefs` 立即更新
 
-**Commit hash**: `330f5f0` + fixup `<待填>`
+**Commit hash**: `330f5f0` + fixup `6cb9671`
 
 **T4 fixup（用户反馈后修补）**：
 1. **card 点击 UX bug**：原版只有 inline icon button 可点，整张 card 不响应。改成「点 card body → 自动 setActive() + openEdit() 同时发生」（master-detail 体验，正是用户期望的「点击配置切换」）。Inline button 加 `e.stopPropagation()` 避免冒泡到 card click。删除冗余的「使用」「编辑」icon button（语义已被整张 card 接管），剩 3 个：默认/测试/删除
