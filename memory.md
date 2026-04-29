@@ -69,7 +69,7 @@
 | T3 | `bd20bfc` | — | 前端 ConnectionTestDialog + SecretInput |
 | T4 | `330f5f0` | `6cb9671`（card 点击 UX + dev 页 sanitize） | 前端 setup 页重写 |
 | T5 | `4e48cab` | `7affb77`（hydration mismatch fix） | 前端语音输入 |
-| T6 | `<本次>` | — | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
+| T6 | `a53a5e4` | — | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
 
 ### v1.1 ship 清单验证（spec §6）
 - [x] 6 个 task 顺序完成 + 每步 user-confirm gate 通过
