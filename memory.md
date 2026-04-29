@@ -66,7 +66,7 @@
   8. 点「删除」→ confirm → card 消失
   9. 切语音语言 → DevTools 查看 `mockinterview.uiPrefs` 立即更新
 
-**Commit hash**: 待填
+**Commit hash**: `330f5f0`
 
 **下一步**：等用户确认 → T5 前端语音输入（lib/speech.ts + voice-input 组件 + drill/mock 集成）
 
