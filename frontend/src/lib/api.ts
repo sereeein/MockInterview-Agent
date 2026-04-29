@@ -156,3 +156,48 @@ export async function getMock(mock_id: number): Promise<MockSession> {
 export async function getMockReport(mock_id: number): Promise<MockReport> {
   return jsonRequest(`/reports/mock/${mock_id}`);
 }
+
+// ---------- v1.1: connection test ----------
+
+export type ProviderTestCategory =
+  | "ok"
+  | "network"
+  | "auth"
+  | "rate_limit"
+  | "json_format"
+  | "unknown";
+
+export interface ProviderTestResult {
+  ok: boolean;
+  category: ProviderTestCategory;
+  http_status: number | null;
+  provider_message: string | null;
+  raw_response: string | null;
+  elapsed_ms: number;
+}
+
+/** Test a provider config by hitting POST /provider/test with the given headers.
+ *  When `override` is provided, those X-* headers replace the active config's
+ *  headers (for testing a being-edited config that isn't yet saved/active).
+ *
+ *  Throws if `override.apiKey` is empty (avoids backend 401 → setup redirect loop). */
+export async function testProvider(override: {
+  provider: string;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+}): Promise<ProviderTestResult> {
+  if (!override.apiKey?.trim()) {
+    throw new Error("apiKey is required to test connection");
+  }
+  const headers: Record<string, string> = {
+    "X-Provider": override.provider,
+    "X-API-Key": override.apiKey,
+  };
+  if (override.model) headers["X-Model"] = override.model;
+  if (override.baseUrl) headers["X-Base-URL"] = override.baseUrl;
+  return jsonRequest<ProviderTestResult>("/provider/test", {
+    method: "POST",
+    headers,
+  });
+}

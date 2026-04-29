@@ -21,6 +21,47 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 T3 — 前端 ConnectionTestDialog + SecretInput 组件
+
+**任务**：v1.1 T3，前端建两个独立可复用组件 + lib/api.ts 加 testProvider() 函数；dev showcase 页验 7 类视觉
+
+**设计文档**：[`docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md`](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md) §2.5 + §2.6 + §5 T3
+
+**做了什么**：
+- 新建 `frontend/src/components/secret-input.tsx`：包装 `<Input>` + lucide `Eye`/`EyeOff` 切换 password ↔ text，按钮浮在右内 0.5。`onChange(value)` 接口与既有 password 输入一致，方便 T4 setup 表单替换
+- 新建 `frontend/src/components/connection-test-dialog.tsx`：纯展示组件，由 parent 驱动 `state` prop（`{phase: "testing"}` 或 `{phase: "result", result: ProviderTestResult}`）。这个解耦设计让 T4 setup 页接真实 API 时只管异步流程；dev showcase 页可直接喂 mock result 验视觉
+  - 6 类 category 分别走独立分支：ok（绿 ✓ + 自动 2 秒关）/ network（红 ⚠ + base_url 提示）/ auth（红 ⚠ + key 失效提示）/ rate_limit（红 ⚠ + 限流提示）/ json_format（红 ⚠ + 中性建议 + 折叠 raw_response）/ unknown（红 ⚠ + 反馈链接）
+  - testing 状态有 ElapsedCounter（每 100ms tick）显示实时耗时
+  - 错误体内有 CopyButton 一键复制 `HTTP <status>\n<provider_message>` 用于精确报错诉求
+- `frontend/src/lib/api.ts`：加 `ProviderTestCategory` / `ProviderTestResult` 类型 + `testProvider(override)` 函数，强制 `apiKey` 非空避免 backend 401 → /setup redirect 循环
+- 新建 dev showcase 页 `frontend/src/app/dev/connection-test/page.tsx`：7 个 button（含 testing loading 状态）展示所有 dialog 状态。**T6 收尾时可删除**
+- `frontend/tsconfig.json`：`exclude` 加 `scripts/**`——T1 的 smoke-t1.mts 用 Node 22 strip-types 跑，含 `.ts` 扩展名 import，与 Next.js 默认 tsconfig 冲突。scripts/ 是 Node 工具不该参与 Next 类型检查
+
+**关键决策**：
+- **dialog 解耦设计**：parent driven state（不在组件内 useEffect 调 testProvider），让组件可独立测试 + 让 T4 决策何时关闭/重试。这种 controlled design 在 React 里成本最低
+- **testProvider override 参数**：传 `{provider, apiKey, model, baseUrl}` 而非 SavedConfig，因为 T4 编辑表单中的 config 还没保存（无 id），用 4 字段 flat 接口最干净
+- **7 个 mock 状态而非 6**：testing loading 单独算一个，避免 dev page 验不到 ElapsedCounter 动画
+- **不写 vitest 单测**：v1.0 节奏延续，dev showcase + typecheck 已经能 cover 所有路径
+- **dev page 路径选 /dev/**：Next.js 16 默认所有 page 都暴露，没有 dev-only gate；用 /dev/ 前缀语义清楚 + T6 删整个目录就能撤底清理
+
+**改动的文件**：
+- New: `frontend/src/components/secret-input.tsx`
+- New: `frontend/src/components/connection-test-dialog.tsx`
+- New: `frontend/src/app/dev/connection-test/page.tsx`（T6 可删）
+- Modified: `frontend/src/lib/api.ts`（加 ProviderTestResult 类型 + testProvider 函数）
+- Modified: `frontend/tsconfig.json`（exclude scripts/）
+
+**验证方式**：
+- `cd frontend && npx tsc --noEmit` → exit 0，零错误
+- 用户已有 `npm run dev` 在 :3000 跑：`curl http://localhost:3000/dev/connection-test` → HTTP 200 / 24636 bytes / 7 个 button label 全部 SSR 渲染（grep 1-7. testing/ok/network/auth/rate_limit/json_format/unknown 各 1 命中）
+- 用户可手动逐个点击验：testing 显示 spinner + 实时 ms / ok 自动 2s 关 / 4 类 fail 显示对应中文标题 + 复制按钮 + 折叠 raw_response（仅 json_format）
+
+**Commit hash**: 待填
+
+**下一步**：等用户确认 → T4 前端 setup 页大改（左右栏 + banner + saved config 卡片 CRUD + 导出/导入 + 集成 ConnectionTestDialog/SecretInput）
+
+---
+
 ## 2026-04-29 · v1.1 T2 — 后端 `/provider/test` endpoint + 5 类错误分类
 
 **任务**：v1.1 T2，给 backend 加最小 token 连接测试 endpoint，验证 provider+model+key 可用性 + JSON 输出能力，跨 10 provider 统一错误分类
