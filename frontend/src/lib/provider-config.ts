@@ -314,6 +314,46 @@ export function getActiveConfig(): SavedConfig | null {
   return store.configs.find((c) => c.id === store.activeId) ?? null;
 }
 
+/** Merge an exported list of configs into the current store, by id.
+ *  - same id → overwrite all fields (name + credentials + status reset to null)
+ *  - new id → append as-is
+ *  Does NOT change activeId or defaultId — caller decides if they want to switch.
+ *  Returns the new store + counts {added, updated} for toast UX. */
+export function importConfigs(
+  imported: SavedConfig[]
+): { store: ProviderConfigStore; added: number; updated: number } {
+  const store = getStore();
+  const byId = new Map(store.configs.map((c) => [c.id, c]));
+  let added = 0;
+  let updated = 0;
+  for (const cfg of imported) {
+    if (!cfg.id || !cfg.name || !cfg.provider || !cfg.apiKey) continue;
+    if (byId.has(cfg.id)) {
+      byId.set(cfg.id, {
+        ...cfg,
+        // imported test status is stale across machines — reset
+        lastTestedAt: null,
+        lastTestStatus: null,
+      });
+      updated += 1;
+    } else {
+      byId.set(cfg.id, {
+        ...cfg,
+        lastTestedAt: null,
+        lastTestStatus: null,
+      });
+      added += 1;
+    }
+  }
+  const next: ProviderConfigStore = {
+    configs: Array.from(byId.values()),
+    activeId: store.activeId ?? Array.from(byId.values())[0]?.id ?? null,
+    defaultId: store.defaultId ?? Array.from(byId.values())[0]?.id ?? null,
+  };
+  setStore(next);
+  return { store: next, added, updated };
+}
+
 // ---------- v1.0 compatibility shims (deprecated, still functional) ----------
 
 /** @deprecated v1.0 shim — use getActiveConfig() instead. */

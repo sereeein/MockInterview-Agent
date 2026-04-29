@@ -21,6 +21,57 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 T4 — 前端 setup 页大改：左右栏 + 多 config 卡片 + 导入导出
+
+**任务**：v1.1 T4，把 v1.0 的单 config setup 页重写成多 config 管理界面，集成 T3 的 ConnectionTestDialog + SecretInput
+
+**设计文档**：[`docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md`](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md) §1 + §5 T4
+
+**做了什么**：
+- 重写 `frontend/src/app/setup/page.tsx`：
+  - **顶部 banner**：黄色 alert + ⚠️ 图标，明确提示"换浏览器/清缓存会全部丢失，建议导出备份"
+  - **左右栏布局**（mobile 自动堆叠）：左侧 saved config 卡片列表（360px 固定宽）+ 右侧编辑表单
+  - **每张卡片**：状态点（绿/灰/红）+ name + ⭐ 默认标记 + provider 标签 + model 名 + 「使用中」徽章 + 5 个 icon 按钮（使用/编辑/默认/测试/删除）
+  - **编辑表单**：配置名称（必填）+ ProviderSelector + SecretInput（key 显隐切换）+ 获取 key 链接 + Model + Base URL 双列布局 + 底部 3 button「取消 / 保存并测试 / 保存」
+  - **底部独立小区块 1**：语音识别语言单选（zh-CN/zh-TW/en-US）
+  - **底部独立小区块 2**：导入/导出 JSON 按钮 + 警告文案
+- `frontend/src/lib/provider-config.ts` 加 `importConfigs()` helper：merge by id（同 id 覆盖、新 id 追加），不动 active/default，导入的 config lastTestStatus 一律重置（跨机测试结果不可信）
+- **toast 实现**：v1.1 不引入 toast 库，用 `document.body.appendChild` + 1.8s fade 淡出的极简 inline toast。覆盖 8 种场景（保存成功/切换/删除/导出/导入完成/各类错误）
+
+**关键决策**：
+- **删除最后一组 config 后跳 onboarding**：调用 `router.push("/setup?next=...")` 实际是当前页 reload 到空状态——比无谓的额外导航好
+- **next 参数兼容**：v1.0 路径 `/setup?next=/library` 仍能用，但只在「保存」后 redirect。如果用户未编辑直接退出，可以点击额外的「跳过编辑直接前往 X」link
+- **保存并测试不关闭 editor**：用户可能要看测试结果决定是否再调整 model/key——比起"测了就关"更友好
+- **「使用」按钮上次失败时强制确认**：调用 `window.confirm` 警告（不引入新的 confirm dialog 组件），符合 §1.4 设计
+- **编辑表单 + 卡片 status 点联动**：updateConfig 触底 reset lastTestStatus（T1 已实现）；这里 UX 上 refresh() 后状态点立刻更新
+- **使用 ProviderSelector 既有组件**：v1.0 现成的 grid 布局，复用零成本
+- **5 个 icon-button 而非 menu**：dropdown menu 组件不在现有 shadcn 集合里，省掉新增一个组件
+- **shadcn Card 没有 Footer slot**：用 CardContent 内 flex justify-between 兜底
+
+**改动的文件**：
+- Modified: `frontend/src/app/setup/page.tsx`（完全重写，从 ~140 行扩到 ~470 行）
+- Modified: `frontend/src/lib/provider-config.ts`（加 importConfigs，约 30 行）
+
+**验证方式**：
+- `cd frontend && npx tsc --noEmit` → exit 0
+- 用户已有 dev:3000：`curl /setup` → HTTP 200 / 23862 bytes / 8 个关键字符串全部 SSR 渲染（"Provider 配置" / "BYOK" / "已保存配置" / "新建" / "语音输入语言" / "导入 / 导出" / "导出全部 JSON" / "导入 JSON"）
+- **建议手测 flow**（用户在 :3000 操作）：
+  1. 打开 /setup → 看到 banner + "已保存配置 (1)"（v1.0 的「默认配置」自动迁移）
+  2. 点「新建」→ 编辑表单出现 → 填名字 + 换 provider + 粘 key → 「保存」→ toast + 表单关闭 + 列表 +1
+  3. 点新 card 的「测试」→ Dialog 弹 testing 状态 → 看真 API 调用结果（5 类 category 之一）
+  4. 点 card 的「⭐ 默认」→ toast + 该 card 显示 ⭐ 图标
+  5. 点 card 的「使用」（非 active 卡片）→ toast 切换
+  6. 点「导出全部 JSON」→ confirm → 浏览器下载 `mockinterview-configs-2026-04-29.json`
+  7. 清 localStorage → 刷新 → 看到空状态 → 点「导入 JSON」→ 选刚才下载的文件 → toast 显示「新增 N」
+  8. 点「删除」→ confirm → card 消失
+  9. 切语音语言 → DevTools 查看 `mockinterview.uiPrefs` 立即更新
+
+**Commit hash**: 待填
+
+**下一步**：等用户确认 → T5 前端语音输入（lib/speech.ts + voice-input 组件 + drill/mock 集成）
+
+---
+
 ## 2026-04-29 · v1.1 T3 — 前端 ConnectionTestDialog + SecretInput 组件
 
 **任务**：v1.1 T3，前端建两个独立可复用组件 + lib/api.ts 加 testProvider() 函数；dev showcase 页验 7 类视觉
