@@ -64,7 +64,7 @@
   - 2) bad anthropic key 真 API → HTTP 200 / category=auth / http_status=401 / provider_message 含真 Anthropic JSON 错误 ✓
   - 3) custom provider 不可达 base_url → HTTP 200 / category=network / provider_message="Connection error." / elapsed_ms=1368 ✓
 
-**Commit hash**: 待填
+**Commit hash**: `22edd9c`
 
 **下一步**：等用户确认 → T3 前端 ConnectionTestDialog + SecretInput 通用组件
 
