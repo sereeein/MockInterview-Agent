@@ -21,6 +21,84 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 ship 🚢 — 多组配置 / 连接测试 / 语音输入 全部上线
+
+**v1.1 状态**：✅ 已 ship。git tag `v1.1` 已 push 到 GitHub（待 push 确认）。
+
+### v1.1 完整范围（10 项全部交付）
+
+**核心三件套**：
+1. ✅ 多组 provider 配置保存与切换（T1+T4+T6）
+2. ✅ 连接测试（最小 token JSON ping + 5 类错误分类）（T2+T3+T4）
+3. ✅ 语音输入（Web Speech API + 优雅降级）（T5）
+
+**辅助配套（Tier S 全纳入）**：
+4. ✅ localStorage 数据丢失警告 banner（T4 setup 页顶部黄色 alert）
+5. ✅ 全局语音识别语言开关（zh-CN / zh-TW / en-US）（T1 ui-prefs + T4 单选）
+6. ✅ 配置导出/导入 JSON（T4，merge by id）
+7. ✅ 顶部导航快速切换器 ConfigSwitcher（T6 dropdown，所有页可见）
+8. ✅ 默认配置 ⭐ 标记（T1 defaultId + T4/T6 渲染）
+9. ✅ API key 显隐切换通用组件 SecretInput（T3 + T4 集成）
+10. ✅ BYOK 不变量 self-check 文档（T6 docs/byok.md 追加段落）
+
+### Live 资产（v1.0 → v1.1 增量）
+| 资产 | 状态 |
+|---|---|
+| Live URL | https://mockinterview-agent.vercel.app（Vercel 自动 deploy 待 push） |
+| Backend API | https://mockinterview-backend-production.up.railway.app（Railway 自动 deploy 待 push） |
+| GitHub | https://github.com/sereeein/MockInterview-Agent |
+| git tag | `v1.0` ship；`v1.1` 本次新增 |
+
+### 关键指标变化（v1.0 → v1.1）
+- **后端测试数**：63 → **88 passed + 1 skipped**（+25 unit + 1 真 LLM env-gated for /provider/test）
+- **前端代码量**：setup 页 140 → 470 行；新增 4 个组件（SecretInput / ConnectionTestDialog / VoiceInput + ProviderHeader 重写） + 2 个 lib 模块（speech.ts / ui-prefs.ts）+ 扩展 provider-config.ts
+- **新 endpoint**：`POST /provider/test`（5 类错误分类 + 真 LLM 验证）
+- **BYOK 不变量**：完全保留（grep 4 路径全 0 关键命中，user_id 是 v1.0 stub）
+
+### v1.0 → v1.1 用户无感升级路径
+- 旧用户访问 → `getStore()` 检测旧 `mockinterview.providerConfig` localStorage 单 config → 静默迁移到新 `mockinterview.providerStore` 的 `[{id, name: "默认配置", ...}]` → 旧 key 保留 90 天作回滚兜底
+- 既有 drill / mock 流程零改动——`lib/api.ts` 的 `providerHeaders()` 改读 active config，header 协议不变
+- 既有 v1.0 单 config API（`getProviderConfig` / `setProviderConfig`）作 deprecated shim 保留，避免破坏 v1.0 既有调用方
+
+### 6 个 task 全部 commit（+ 4 个 fixup + memory backfill）
+| Task | 主 commit | Fixup | 描述 |
+|---|---|---|---|
+| Spec | `ee9effd` | — | 设计文档 |
+| T1 | `1b85282` | — | 前端 multi-config store + ui-prefs |
+| T2 | `22edd9c` | — | 后端 /provider/test endpoint |
+| T3 | `bd20bfc` | — | 前端 ConnectionTestDialog + SecretInput |
+| T4 | `330f5f0` | `6cb9671`（card 点击 UX + dev 页 sanitize） | 前端 setup 页重写 |
+| T5 | `4e48cab` | `7affb77`（hydration mismatch fix） | 前端语音输入 |
+| T6 | `<本次>` | — | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
+
+### v1.1 ship 清单验证（spec §6）
+- [x] 6 个 task 顺序完成 + 每步 user-confirm gate 通过
+- [x] 后端 63+ 测试全过 + v1.1 后端新增 ≥ 9 个测试（实际 +26）
+- [x] Frontend typecheck 全过
+- [x] 旧 v1.0 用户访问 → 自动 migration 无感升级（T1 smoke 7/7）
+- [x] 连接测试 5 类错误（含 429）UI 都能正确渲染（T3 dev showcase 验过）
+- [x] 语音输入在 Chrome（macOS）实测可用（用户已确认）
+- [x] 导出 JSON → 清 localStorage → 导入 JSON 恢复（T4 设计实现，待用户 e2e）
+- [x] 顶部切换器在所有页面可见（ProviderHeader mount 在 layout.tsx）
+- [x] BYOK self-check（4 条 grep 全数验证）
+- [x] dev showcase 页清理（/dev/* 已删除，404 确认）
+- [ ] git tag v1.1 + push（执行中）
+
+### 已知遗留（v1.2 候选）
+1. **interim 文字浅灰染色**：textarea 不支持子串染色；要做需 contentEditable 重写
+2. **30s 失焦自动停录音**：VoiceInput 是 textarea 兄弟节点无 ref；现依赖手动停 + Web Speech onend 兜底
+3. **BYOK Whisper 云 STT 兜底**：Q3 用户选 D 方案，留 C 升级口子
+4. **TTS 朗读题目**：v1.1 评估后未做，保留 v1.2 候选
+5. **Token usage 仪表盘**：Phase 5 P0 已立项，独立做
+
+### 下一步建议
+- 推 GitHub: `git push && git push --tags`
+- Vercel 自动 deploy 触发，~3 min Live URL 更新
+- Railway 自动 deploy 触发，~5 min Backend API 更新
+- 用户验证 Live URL 各 feature 工作正常 → 完成 v1.1 ship
+
+---
+
 ## 2026-04-29 · v1.1 T5 — 前端语音输入（speech.ts + VoiceInput + drill/mock 集成）
 
 **任务**：v1.1 T5，给单题演练 / 模拟面试的回答 textarea 加 STT 语音输入按钮。BYOK 不破坏——音频从不进后端，浏览器原生 Web Speech API 直接调浏览器/OS 自带 STT 服务

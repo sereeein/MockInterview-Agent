@@ -45,3 +45,54 @@ MockInterview Agent **不持有任何 API key**——每个用户用自己的 ke
 - Frontend：`/setup` 页 + localStorage + `lib/api.ts` 注 4 个 X-* header；401 自动跳回 /setup
 
 详见 [`docs/superpowers/specs/`](superpowers/specs/) 设计文档。
+
+## v1.1 BYOK self-check
+
+v1.1 新增三个核心 feature（多组配置 / 连接测试 / 语音输入）+ 七个辅助配套
+项后，BYOK 服务器零持有 key 的硬约束**仍完全成立**。证据：
+
+### 1. 多组配置全部存在客户端 localStorage
+- 所有保存的 `SavedConfig[]` 在浏览器 `localStorage["mockinterview.providerStore"]`
+- 后端**没有**任何 user / config / api_key 表或字段
+- 验证：`git grep -E "save.*api.*key|store.*api.*key|persist.*api.*key" backend/`
+  应该 0 命中（没有 server-side key 持久化代码）
+- 验证：`git grep -E "user_id|account_id|auth.*token" backend/src/mockinterview/db/`
+  应仅命中 1 处：`db/models.py` 的 `user_id: int = Field(default=1, index=True)`
+  ——v1.0 遗留的 stub field（单用户模式占位 + 未来扩展预留），**不存任何 key**，
+  当前永远是 1
+
+### 2. 连接测试 endpoint 不持有 key
+- `POST /provider/test` 复用 `use_provider` Depends（[backend/src/mockinterview/routes/_deps.py](../backend/src/mockinterview/routes/_deps.py)）
+- key 走 `X-API-Key` header 透传，请求结束 ContextVar 自动重置 → 内存中也不留
+- 验证：`grep -A5 "use_provider" backend/src/mockinterview/routes/_deps.py`
+  确认 key 仅作为 SDK client 构造参数，不写文件不入库
+
+### 3. 语音 STT 在浏览器本地完成
+- Web Speech API 是浏览器调系统/Google/Apple STT，**音频从不进 mockinterview 的后端**
+- 验证：`grep -r "audio\|speech\|stt\|whisper" backend/src/mockinterview/routes/`
+  应该 0 命中（后端没有 audio endpoint）
+- 验证：`grep -r "FormData.*audio\|MediaRecorder" frontend/src/lib/api.ts`
+  应该 0 命中（前端 API client 不传输 audio 数据）
+
+### 4. 配置导出文件为客户端动作
+- `导出 JSON` 在前端用 `URL.createObjectURL(Blob)` 触发浏览器下载
+- 文件**不经过任何 mockinterview 服务器**——即使你导出 100MB key 列表，
+  bandwidth 在你和你浏览器之间发生
+- 文件含明文 key，是你本地的责任（导出对话框已警告）
+
+### v1.1 没有破坏的不变量
+
+- ✅ 服务器零持有 key（v1.0 + v1.1 同样成立）
+- ✅ 服务器零运营成本（v1.0 + v1.1 同样成立——加 `/provider/test` 也不消耗
+  开发者的额度，因为它仍是用用户自己的 key 调用）
+- ✅ 用户成本完全透明（同 v1.0）
+- ✅ 用户可选最便宜 provider（v1.1 多组保存让这条更称手——一键切换比不同
+  价位 provider）
+
+### v1.1 引入的新 trade-off
+
+- ⚠️ **localStorage 易失性**：v1.0 已是 localStorage，v1.1 没有恶化但**多组
+  保存让损失更显著**（v1.0 丢一组 vs v1.1 可能丢 N 组）。Mitigation: setup
+  页 banner + 导入/导出 JSON
+- ⚠️ **导出文件含明文 key**：v1.0 没这个 surface，v1.1 导出对话框已警告
+  「文件含明文 API key，请妥善保管，不要上传到任何公开平台」
