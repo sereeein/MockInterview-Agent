@@ -69,7 +69,14 @@
 | T3 | `bd20bfc` | — | 前端 ConnectionTestDialog + SecretInput |
 | T4 | `330f5f0` | `6cb9671`（card 点击 UX + dev 页 sanitize） | 前端 setup 页重写 |
 | T5 | `4e48cab` | `7affb77`（hydration mismatch fix） | 前端语音输入 |
-| T6 | `a53a5e4` | — | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
+| T6 | `a53a5e4` | `<待填>` | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
+
+**T6 fixup（用户 e2e 反馈后修补）**：
+- **缺「→ 上传简历」入口**：v1.1 setup 页砍掉了 v1.0 「保存后自动跳 next」的逻辑（让用户能连续编辑多组 config 不被打断），但忘了补手动跳转入口，用户保存完 config 后没办法干净地走出 /setup。修法：
+  - setup 页 header 右上角加固定 CTA button「→ 去上传简历」（active config 存在时才显示）
+  - editor empty-state 卡片底部加 link「或者直接 去上传简历」
+  - 删掉 editor 内部那段「保存后自动设为使用中。准备继续前往：…」+「跳过编辑，直接前往」link（被 header CTA 接管）
+- **`Failed to fetch` 排查**：用户报 `(无 HTTP 状态码) Failed to fetch`——是 frontend 的 `.env.local` 配 `NEXT_PUBLIC_API_URL=http://localhost:8002` 但 8002 没 backend 在跑。**Railway 部署的 backend 还是 v1.0 没有 `/provider/test` endpoint**——v1.1 还没 push。诊断后启了本地 v1.1 backend 在 8002，e2e 可继续走
 
 ### v1.1 ship 清单验证（spec §6）
 - [x] 6 个 task 顺序完成 + 每步 user-confirm gate 通过

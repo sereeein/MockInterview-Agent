@@ -1,8 +1,10 @@
 "use client";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
+  ArrowRight,
   Download,
   Plus,
   Star,
@@ -337,12 +339,23 @@ function SetupView() {
 
   return (
     <main className="container max-w-6xl mx-auto py-8 space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Provider 配置</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          BYOK：所有 API key 仅存在你的浏览器（localStorage），不会上传到服务器。
-          每次请求作为 X-API-Key header 透传给后端调用 LLM。
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Provider 配置</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            BYOK：所有 API key 仅存在你的浏览器（localStorage），不会上传到服务器。
+            每次请求作为 X-API-Key header 透传给后端调用 LLM。
+          </p>
+        </div>
+        {store.configs.length > 0 && store.activeId && (
+          <Link
+            href={next}
+            className="shrink-0 inline-flex items-center gap-1 rounded-md border bg-primary text-primary-foreground px-3 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            {next === "/" ? "去上传简历" : `去 ${next}`}
+            <ArrowRight className="size-4" />
+          </Link>
+        )}
       </header>
 
       <div className="rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40 px-4 py-3 flex items-start gap-2">
@@ -467,10 +480,21 @@ function SetupView() {
         <section>
           {!editor ? (
             <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                {store.configs.length === 0
-                  ? "👈 点左侧「新建」创建第一组配置"
-                  : "👈 点左侧任一卡片可同时切换并编辑，或「新建」一组"}
+              <CardContent className="py-12 text-center text-sm text-muted-foreground space-y-3">
+                <p>
+                  {store.configs.length === 0
+                    ? "👈 点左侧「新建」创建第一组配置"
+                    : "👈 点左侧任一卡片可同时切换并编辑，或「新建」一组"}
+                </p>
+                {store.configs.length > 0 && store.activeId && (
+                  <Link
+                    href={next}
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    或者直接 {next === "/" ? "去上传简历" : `前往 ${next}`}
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -575,21 +599,10 @@ function SetupView() {
                   <Button onClick={onSave}>保存</Button>
                 </div>
 
-                {/* If we just navigated here from a 401 redirect, the user clicked
-                    Save → we want to continue to `next`. Wire below */}
                 <p className="text-xs text-muted-foreground">
-                  保存后会自动设为「使用中」。
-                  {next !== "/" && ` 准备继续前往：${next}`}
+                  保存后会自动设为「使用中」。配完后点页面右上角「
+                  {next === "/" ? "去上传简历" : `去 ${next}`}」继续。
                 </p>
-                {next !== "/" && store.configs.length > 0 && (
-                  <Button
-                    variant="link"
-                    onClick={() => router.push(next)}
-                    className="px-0"
-                  >
-                    跳过编辑，直接前往 {next} →
-                  </Button>
-                )}
               </CardContent>
             </Card>
           )}
