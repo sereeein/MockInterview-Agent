@@ -1,9 +1,18 @@
+from time import perf_counter
 from typing import Any
 
 from google import genai
 from google.genai import types
 
 from mockinterview.agent.providers.base import LLMProvider
+from mockinterview.agent.providers.test_support import (
+    TEST_MAX_TOKENS,
+    TEST_SYSTEM,
+    TEST_USER,
+    categorize_error,
+    validate_json_response,
+)
+from mockinterview.schemas.provider import ProviderTestResult
 
 
 class GeminiProvider(LLMProvider):
@@ -33,3 +42,48 @@ class GeminiProvider(LLMProvider):
         from mockinterview.agent.client import parse_json_response
 
         return parse_json_response(text)
+
+    def test_connection(self) -> ProviderTestResult:
+        t0 = perf_counter()
+        try:
+            resp = self.client.models.generate_content(
+                model=self.model,
+                contents=[{"role": "user", "parts": [{"text": TEST_USER}]}],
+                config=types.GenerateContentConfig(
+                    system_instruction=TEST_SYSTEM,
+                    max_output_tokens=TEST_MAX_TOKENS,
+                    response_mime_type="application/json",
+                    temperature=0,
+                ),
+            )
+            text = resp.text or ""
+            elapsed = int((perf_counter() - t0) * 1000)
+            ok, excerpt = validate_json_response(text)
+            if ok:
+                return ProviderTestResult(
+                    ok=True,
+                    category="ok",
+                    http_status=200,
+                    provider_message=None,
+                    raw_response=None,
+                    elapsed_ms=elapsed,
+                )
+            return ProviderTestResult(
+                ok=False,
+                category="json_format",
+                http_status=200,
+                provider_message=None,
+                raw_response=excerpt,
+                elapsed_ms=elapsed,
+            )
+        except Exception as exc:
+            elapsed = int((perf_counter() - t0) * 1000)
+            category, status = categorize_error(exc)
+            return ProviderTestResult(
+                ok=False,
+                category=category,  # type: ignore[arg-type]
+                http_status=status,
+                provider_message=str(exc)[:500],
+                raw_response=None,
+                elapsed_ms=elapsed,
+            )

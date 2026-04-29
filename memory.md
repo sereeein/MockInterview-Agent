@@ -21,6 +21,55 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 T2 — 后端 `/provider/test` endpoint + 5 类错误分类
+
+**任务**：v1.1 T2，给 backend 加最小 token 连接测试 endpoint，验证 provider+model+key 可用性 + JSON 输出能力，跨 10 provider 统一错误分类
+
+**设计文档**：[`docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md`](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md) §2 / §5 T2
+
+**做了什么**：
+- 新建 `schemas/provider.py`：`ProviderTestResult` Pydantic 模型，`category` 字段是 `Literal["ok", "network", "auth", "rate_limit", "json_format", "unknown"]`
+- 新建 `agent/providers/test_support.py`：共享 `TEST_SYSTEM` / `TEST_USER` / `TEST_MAX_TOKENS=30` 常量 + `categorize_error()` 跨 SDK 错误分类器（探测 status_code → code → response.status_code → 类名 → message 串）+ `validate_json_response()`（解析 + ok=True 检查 + 失败时返回前 500 字符 raw_response）
+- `agent/providers/base.py`：`LLMProvider` ABC 加 `test_connection() -> ProviderTestResult` 抽象方法
+- 三个 provider impl 各加 `test_connection()` 方法：**独立于 `call_json()`**，严格 max_tokens=30 + temperature=0
+  - Anthropic：直接调 `client.messages.create`，system 用 plain string（不做 cache_control 因为是一次性调用）
+  - OpenAI-compat：先试 `response_format=json_object`，失败时 fallback 到 plain，但 auth/rate/network 错误**不重试 fallback**（避免浪费 token）
+  - Gemini：复用既有 `response_mime_type="application/json"` 模式
+- 新建 `routes/provider.py`：`POST /provider/test`，复用 `use_provider` Depends
+- `main.py` 注册 `provider_routes.router`
+- 新建 `tests/test_connection.py`：26 个测试（5 helper + 9 categorize + 4 anthropic mock + 3 openai mock + 2 gemini mock + 2 route + 1 真 LLM happy path 用 ANTHROPIC_API_KEY env 跳过）
+
+**关键决策**：
+- **错误分类 5 类（不含 ok）**：network / auth / rate_limit / json_format / unknown —— 用户要求把 429 单独拆出来便于显示「触发限流」精确提示
+- **JSON 格式失败仍返回 HTTP 200**：endpoint 自身永不 raise；所有失败映射到 `ProviderTestResult.category` 让前端按类别渲染。`provider_message` 保留 SDK 原始错误前 500 字符（如 `"Error code: 401 - {'type': 'error', 'error': {...}, 'request_id': '...'}`），方便用户精确定位
+- **OpenAI-compat 的 fallback 重试逻辑**：v1.0 的 `call_json` 是无脑 try response_format → fallback。v1.1 测试逻辑要更精细：只对 "response_format unsupported" 类的错误 fallback；auth/rate/connection/timeout 错误**直接 raise 让 categorize_error 接管**——否则会浪费第二次 token 配额且分类丢失
+- **真 LLM happy path 通过 env 门控**：`@pytest.mark.skipif(not os.environ.get("ANTHROPIC_API_KEY"))`——CI 默认无 key 跳过，本地有 key 时验证 prompt 设计真能让 Claude 严格回 `{"ok": true, "echo": "ping"}`
+- **不引入 anthropic/openai SDK 的具体 Exception 类做匹配**：用 duck-typed `categorize_error` 探测属性 + 类名 + message，跨 SDK 统一逻辑且不耦合具体 SDK 版本
+
+**改动的文件**：
+- New: `backend/src/mockinterview/schemas/provider.py`
+- New: `backend/src/mockinterview/agent/providers/test_support.py`
+- Modified: `backend/src/mockinterview/agent/providers/base.py`（加 abstract method）
+- Modified: `backend/src/mockinterview/agent/providers/anthropic.py`
+- Modified: `backend/src/mockinterview/agent/providers/openai_compat.py`
+- Modified: `backend/src/mockinterview/agent/providers/gemini.py`
+- New: `backend/src/mockinterview/routes/provider.py`
+- Modified: `backend/src/mockinterview/main.py`（import + include_router）
+- New: `backend/tests/test_connection.py`（26 tests）
+
+**验证方式**：
+- `cd backend && uv run pytest -x` → **88 passed, 1 skipped**（v1.0 是 63 → +25 unit + +1 real-LLM skipped；超出 spec 「≥9 个新测试」的目标）
+- 启 backend dev server `uv run uvicorn ...` 跑 3 个 curl smoke：
+  - 1) 无 X-API-Key → HTTP 401（use_provider Depends gate）✓
+  - 2) bad anthropic key 真 API → HTTP 200 / category=auth / http_status=401 / provider_message 含真 Anthropic JSON 错误 ✓
+  - 3) custom provider 不可达 base_url → HTTP 200 / category=network / provider_message="Connection error." / elapsed_ms=1368 ✓
+
+**Commit hash**: 待填
+
+**下一步**：等用户确认 → T3 前端 ConnectionTestDialog + SecretInput 通用组件
+
+---
+
 ## 2026-04-29 · v1.1 T1 — 前端数据模型升级（multi-config + ui-prefs）
 
 **任务**：v1.1 计划的 T1，把 v1.0 的单 config localStorage 升级成多 config store + UI 偏好表

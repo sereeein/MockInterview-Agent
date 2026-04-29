@@ -8,6 +8,7 @@ from mockinterview.config import get_settings
 from mockinterview.db.session import init_db
 from mockinterview.routes import drill as drill_routes
 from mockinterview.routes import mock as mock_routes
+from mockinterview.routes import provider as provider_routes
 from mockinterview.routes import questions as questions_routes
 from mockinterview.routes import reports as reports_routes
 from mockinterview.routes import resume as resume_routes
@@ -76,6 +77,7 @@ app.include_router(questions_routes.router)
 app.include_router(drill_routes.router)
 app.include_router(reports_routes.router)
 app.include_router(mock_routes.router)
+app.include_router(provider_routes.router)
 
 
 @app.get("/health")

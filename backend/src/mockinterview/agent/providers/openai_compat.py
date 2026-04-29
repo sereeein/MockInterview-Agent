@@ -1,8 +1,17 @@
+from time import perf_counter
 from typing import Any
 
 from openai import OpenAI
 
 from mockinterview.agent.providers.base import LLMProvider
+from mockinterview.agent.providers.test_support import (
+    TEST_MAX_TOKENS,
+    TEST_SYSTEM,
+    TEST_USER,
+    categorize_error,
+    validate_json_response,
+)
+from mockinterview.schemas.provider import ProviderTestResult
 
 
 class OpenAICompatibleProvider(LLMProvider):
@@ -40,3 +49,72 @@ class OpenAICompatibleProvider(LLMProvider):
         from mockinterview.agent.client import parse_json_response
 
         return parse_json_response(text)
+
+    def test_connection(self) -> ProviderTestResult:
+        t0 = perf_counter()
+        messages = [
+            {"role": "system", "content": TEST_SYSTEM},
+            {"role": "user", "content": TEST_USER},
+        ]
+        try:
+            # Try response_format=json_object first; many OpenAI-compat providers
+            # support it and it makes the JSON output more reliable. Fall back to
+            # plain mode if rejected — same approach as call_json.
+            try:
+                resp = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=TEST_MAX_TOKENS,
+                    temperature=0,
+                    response_format={"type": "json_object"},
+                )
+            except Exception as inner:
+                # Only fall back when response_format is the cause; auth/network/rate
+                # errors should propagate so we categorize them, not silently retry.
+                inner_msg = str(inner).lower()
+                if (
+                    getattr(inner, "status_code", None) in (401, 403, 429)
+                    or "authentication" in type(inner).__name__.lower()
+                    or "ratelimit" in type(inner).__name__.lower()
+                    or "connection" in type(inner).__name__.lower()
+                    or "timeout" in inner_msg
+                ):
+                    raise
+                resp = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=TEST_MAX_TOKENS,
+                    temperature=0,
+                )
+
+            text = (resp.choices[0].message.content or "") if resp.choices else ""
+            elapsed = int((perf_counter() - t0) * 1000)
+            ok, excerpt = validate_json_response(text)
+            if ok:
+                return ProviderTestResult(
+                    ok=True,
+                    category="ok",
+                    http_status=200,
+                    provider_message=None,
+                    raw_response=None,
+                    elapsed_ms=elapsed,
+                )
+            return ProviderTestResult(
+                ok=False,
+                category="json_format",
+                http_status=200,
+                provider_message=None,
+                raw_response=excerpt,
+                elapsed_ms=elapsed,
+            )
+        except Exception as exc:
+            elapsed = int((perf_counter() - t0) * 1000)
+            category, status = categorize_error(exc)
+            return ProviderTestResult(
+                ok=False,
+                category=category,  # type: ignore[arg-type]
+                http_status=status,
+                provider_message=str(exc)[:500],
+                raw_response=None,
+                elapsed_ms=elapsed,
+            )
