@@ -56,7 +56,7 @@
 - 用户已有 `npm run dev` 在 :3000 跑：`curl http://localhost:3000/dev/connection-test` → HTTP 200 / 24636 bytes / 7 个 button label 全部 SSR 渲染（grep 1-7. testing/ok/network/auth/rate_limit/json_format/unknown 各 1 命中）
 - 用户可手动逐个点击验：testing 显示 spinner + 实时 ms / ok 自动 2s 关 / 4 类 fail 显示对应中文标题 + 复制按钮 + 折叠 raw_response（仅 json_format）
 
-**Commit hash**: 待填
+**Commit hash**: `bd20bfc`
 
 **下一步**：等用户确认 → T4 前端 setup 页大改（左右栏 + banner + saved config 卡片 CRUD + 导出/导入 + 集成 ConnectionTestDialog/SecretInput）
 
