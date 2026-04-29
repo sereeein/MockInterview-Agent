@@ -21,6 +21,67 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.0 收尾 — 全部资产清单 + Phase 5 待办（next session 起点）
+
+**v1.0 状态**：✅ 已 ship。git tag `v1.0` 已 push 到 GitHub。
+
+### Live 资产
+| 资产 | URL |
+|---|---|
+| Live Demo | https://mockinterview-agent.vercel.app |
+| Backend API | https://mockinterview-backend-production.up.railway.app |
+| Swagger UI | https://mockinterview-backend-production.up.railway.app/docs |
+| GitHub Repo | https://github.com/sereeein/MockInterview-Agent |
+| v1.0 Release | https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.0 |
+
+### 文档资产
+| 文档 | 用途 |
+|---|---|
+| [PROJECT.md](PROJECT.md) | 立项策略 / 痛点筛选 / 「深内核+开放表层」战略 / ABCD 取舍 |
+| [docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md](docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md) | v1 完整工程设计（13 章节） |
+| [plans/2026-04-27-mock-interview-agent-v1.md](plans/2026-04-27-mock-interview-agent-v1.md) | 4 周分阶段 ~50 task 实施清单（带 TDD 步骤） |
+| [memory.md](memory.md) | 完整开发日志（本文件） |
+| [docs/learning-guide.md](docs/learning-guide.md) | **6 层学习指南**（面试 defense 用） |
+| [docs/byok.md](docs/byok.md) | BYOK 架构说明（10 provider 列表） |
+| [docs/resume-bullets.md](docs/resume-bullets.md) | 简历金句（PROJECT.md 锚定版） |
+| [docs/deployment.md](docs/deployment.md) | Railway + Vercel 部署手册 |
+| [docs/xiaohongshu/week{1,2,3,4}.md](docs/xiaohongshu/) | 4 周冷启动模板 |
+| [eval/reports/2026-04-27.md](eval/reports/2026-04-27.md) | v1.0 评估报告 |
+
+### 关键指标（v1.0）
+- **63 backend unit tests** 全过
+- **63 git commits** + 4 tags（w1-done / w2-done / w3-done / v1.0）
+- **~6000 LOC** 全栈（backend Python + frontend Next.js + eval pipeline）
+- **8 frontend routes** + **15 backend endpoints**
+- 评估：出题相关性 **2.94/3** · 追问命中率 **100%** · baseline 胜率 0%（已知评估方法 bug，v1.5 修）
+
+### Phase 5 / v1.5 待办（按 ROI 排序）
+
+**P0 必修（影响数据可信度）**：
+1. 🐛 **修 baseline 评估 bug**：`eval/run_eval.py` 用 `<placeholder mid-quality answer>` 喂 evaluate_and_followup → ours 追问怪 → judge 必输。修法：先用 user_simulator 生成合成 mid-quality 答案，再喂 evaluate_and_followup。1 小时工程，重新跑 eval 拿真实"vs 裸 Claude 胜率"数字。
+2. 🐛 **JSON 解析 brittle**：Claude 在 line 5 col 76 / line 4 col 75 这类固定位置仍输出格式错乱 JSON。修法二选一：(a) prompt 末尾加严格"严格 JSON 不带中文标点"；(b) 解析失败时 LLM 二次清洗（成本翻倍）
+
+**P1 体验增强**：
+3. 📚 **题库扩到 30 题/岗位**：v1 ship 6 题/岗位（PROJECT.md §5.1 折中方案 C 决策）。用户面试季用真题补到 30。
+4. 🎯 **Drilling judge 收紧**：100% 命中率太完美，可能 judge LLM 太宽松。调判官 prompt 让标准更严，预计掉到 ~80%，但更可信。
+5. 📊 **题目难度自适应**：用户连续答对 T1 medium → 下次出 hard；连续答错 → 出 easy。
+
+**P2 战略升级（PROJECT.md §4 既有规划）**：
+6. 🔍 **B-reframed 候选人情报**：聚合 Glassdoor / 看准网 / 一亩三分地 / 知乎面经，给出题阶段挂数据源。是 PROJECT.md 显式留 v1.5 的功能。
+7. 📈 **实战命中率 dashboard**：开发者本人面试季用，记录"被问到的题里有多少 agent 提前练过"——简历最有说服力的数据。
+8. 📦 **Schema migration 工具**：加 Alembic。当前 SQLite 加列时 dev 必须手动删 `data/app.db`，部署到 prod 后 Volume 里的旧 schema 同样问题。
+
+### 已知遗留（不阻塞 v1，但 v1.5 顺手修）
+- `frontend/src/lib/api.ts` 假设字符串 body 是 JSON——若调用方传 form-encoded string 需显式覆盖 `Content-Type` header（仅 1 行 JSDoc 备注，没人会踩到）
+- `backend/src/mockinterview/routes/resume.py` 是 sync `def`（非 async），`get_settings()` 直调而非 `Depends(get_settings)`
+- `_format_seeds` 里的 magic 12（题库扩到 ≥30 时此切片才生效）
+
+### 下次新 session 接上前序工作的 prompt
+
+见本会话末尾 hand-off prompt。
+
+---
+
 ## 2026-04-27 · Task 4.7 + 4.8 — 生产部署上线 v1
 
 **Done**:
@@ -48,7 +109,7 @@
 - `curl -X OPTIONS .../health -H "Origin: https://mockinterview-agent.vercel.app"` → `200 OK` + `access-control-allow-origin: https://mockinterview-agent.vercel.app` ✓
 - 15 endpoint 全部在 OpenAPI spec 中暴露 ✓
 
-**Commit**: 待和 README + tag v1.0 一起 commit
+**Commit**: `3cf4256` (Dockerfile/dockerignore/hatch config) + `b539574` (deploy README update) + tag `v1.0`
 
 ---
 
@@ -78,7 +139,7 @@
 
 **Verify**: `eval/reports/2026-04-27.md` 写入；63 backend tests 仍全过；前端 build clean
 
-**Commit**: 待和 hotfix / 容错 / 简历金句填数一起 commit
+**Commit**: `c021b1a` (eval results + parser hardening + resume bullets) + `096d71c` (resume bullets PROJECT.md realignment)
 
 ---
 

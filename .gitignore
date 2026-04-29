@@ -33,5 +33,8 @@ out/
 .vscode/
 .idea/
 
-# Eval outputs
+# Eval outputs (force-add v1.0 snapshot via `git add -f`)
 eval/reports/
+
+# Personal artifacts (resume PDFs etc) — never commit
+*.pdf

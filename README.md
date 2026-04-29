@@ -3,8 +3,10 @@
 垂直岗位 AI 面试演练 · 简历反向挖题 · 多轮追问 · 场景切换 UX。
 
 **Live**: https://mockinterview-agent.vercel.app
-
 **Backend API**: https://mockinterview-backend-production.up.railway.app（Swagger 在 `/docs`）
+**Repo**: https://github.com/sereeein/MockInterview-Agent · **Release**: [v1.0](https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.0)
+
+> Status: **v1.0 shipped** (4 周 1 人独立交付 · 63 unit tests · 出题相关性 2.94/3 · 追问命中率 100%)
 
 ## What it does
 - 上传简历 PDF + 选岗位（PM / 数据 / AI / 其他）+ 可选 JD
@@ -66,8 +68,12 @@ pnpm dev
 打开 http://localhost:3000 → 第一次访问会跳到 `/setup` 引导你配置 API key（任意支持的 provider）→ 然后回到上传页。
 
 ## Project journey
-- 立项: [`PROJECT.md`](PROJECT.md)
-- 设计: [`docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md`](docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md)
-- 实施计划: [`plans/2026-04-27-mock-interview-agent-v1.md`](plans/2026-04-27-mock-interview-agent-v1.md)
-- 进度日志: [`memory.md`](memory.md)
+- 立项策略: [`PROJECT.md`](PROJECT.md)
+- v1 设计文档: [`docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md`](docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md)
+- 4 周实施 plan（~50 task）: [`plans/2026-04-27-mock-interview-agent-v1.md`](plans/2026-04-27-mock-interview-agent-v1.md)
+- 完整开发日志: [`memory.md`](memory.md)
+- **6 层学习指南**（面试 defense 用）: [`docs/learning-guide.md`](docs/learning-guide.md)
+- BYOK 架构说明: [`docs/byok.md`](docs/byok.md)
+- 简历金句: [`docs/resume-bullets.md`](docs/resume-bullets.md)
 - 部署 + 评估手册: [`docs/deployment.md`](docs/deployment.md)
+- 小红书 4 周冷启动模板: [`docs/xiaohongshu/`](docs/xiaohongshu/)
