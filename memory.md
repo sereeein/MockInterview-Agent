@@ -65,7 +65,7 @@
 - **建议手测**（用户 Chrome macOS）：打开 [/dev/voice-input](http://localhost:3000/dev/voice-input) → 「检测当前浏览器支持情况」按钮 → 看到「✓ 支持」→ textarea 右下角点 🎙 → 允许麦克风 → 说话 → 看 textarea 实时出文字 → 点 ◼ 停止 → 文字保留
   - 也可去 [/dev/voice-input](http://localhost:3000/dev/voice-input) 切到 Firefox 验证按钮**完全不渲染**
 
-**Commit hash**: `4e48cab` + fixup `<待填>`
+**Commit hash**: `4e48cab` + fixup `7affb77`
 
 **T5 fixup（用户反馈后修补）**：
 - **修 hydration mismatch warning**：原版 `useState(() => detectSpeechSupport())` 在 SSR 渲 null（`window` 未定义），client 首次 hydrate 渲 button（API 已可用）→ React 报「Recoverable Error: Hydration failed」。语音功能本身正常（用户已验证可用），但 console 红警告污染 DX
