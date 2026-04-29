@@ -65,7 +65,7 @@
 - **建议手测**（用户 Chrome macOS）：打开 [/dev/voice-input](http://localhost:3000/dev/voice-input) → 「检测当前浏览器支持情况」按钮 → 看到「✓ 支持」→ textarea 右下角点 🎙 → 允许麦克风 → 说话 → 看 textarea 实时出文字 → 点 ◼ 停止 → 文字保留
   - 也可去 [/dev/voice-input](http://localhost:3000/dev/voice-input) 切到 Firefox 验证按钮**完全不渲染**
 
-**Commit hash**: 待填
+**Commit hash**: `4e48cab`
 
 **下一步**：等用户确认 → T6 顶部切换器 + BYOK self-check 文档 + e2e 验证 + memory.md 收尾 + git tag v1.1
 
