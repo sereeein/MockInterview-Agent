@@ -21,6 +21,42 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 真正上线 + Vercel 自动 deploy 故障诊断
+
+**用户反馈三个问题**：
+1. README 还是 v1.0 版本
+2. Vercel 部署链接显示 v1.0 页面
+3. Releases 里只有 v1.0
+
+**真相诊断**：
+
+**问题 1 - README**：✅ 真问题，已修复
+- v1.1 6 task 期间一直没人改 README，确实陈旧
+- 加了「v1.1 — BYOK UX 进化」section + 改 Status 行 + 加 v1.1 release link
+- Commit: `72211af`
+
+**问题 2 - Vercel 显示 v1.0**：⚠️ 误诊 + 真问题混合
+- **真问题**：GitHub push 没触发 Vercel 自动 deploy。最近 production deployment 是 2 天前的（v1.0 收尾时）。GitHub→Vercel webhook 配置可能有问题
+- **解决**：手动 `vercel --prod --force` from /frontend，build 用了正确的 Next.js 16 + 所有 routes generate ✓
+- **误诊**：curl 返回 HTML 含 "404 / This page could not be found" 让我以为 deploy 坏了。**实际是 `/setup` 用 `useSearchParams()` 触发 BAILOUT_TO_CLIENT_SIDE_RENDERING，SSR 只渲 Suspense fallback `加载……`，HTML 里的 `notFound` 字串是 layout 序列化的 slot，不是错误**。响应头 `x-matched-path: /setup` + `x-nextjs-prerender: 1` 已说明路由正确
+- **用户实际原因**：浏览器缓存 v1.0 页面。硬刷新（Cmd+Shift+R）就看到 v1.1
+- **追加**：诊断期间 frontend/package.json 临时改成 `next build --webpack`，确认 Webpack 也 work；最后**还原回 default**（`next build`，使用 Turbopack）。Vercel build 用 webpack 也 work，但 Turbopack 是 Next.js 16 推荐默认
+
+**问题 3 - GitHub Releases 只有 v1.0**：✅ 真问题，已修复
+- `git tag v1.1` push 创建 tag，但 GitHub Release 是独立资源（需 explicit `gh release create`）
+- 已用 `gh release create v1.1` 创建带详细 changelog 的 release
+- URL: https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.1
+
+**未来项目工作流注意**：
+- 推送到 GitHub 后**主动 `vercel --prod --force` from /frontend**——不能假定自动 deploy 触发（实测 2 天没动）
+- `git push --tags` ≠ GitHub Release —— `gh release create vX.Y` 单独跑
+- curl 测 Next.js client-rendered 页面会被 CSR bailout 误导，看 `x-matched-path` + `x-nextjs-prerender` header 才是真路由状态
+- `/setup` 含 `useSearchParams()` 必须包 `<Suspense>` 这是 Next.js 16 既有的硬约束（v1.0 已遵守 + v1.1 沿用）
+
+**新规则（自此 commit 起生效）**：commit message 不再加 `Co-Authored-By: Claude` trailer。规则源在 `~/.claude/CLAUDE.md`（user-level，跨所有项目）+ 备份在项目 `memory/feedback_no_ai_coauthor.md`
+
+---
+
 ## 2026-04-29 · v1.1 push complete + session 收尾
 
 **push 状态**：✅ 完成
