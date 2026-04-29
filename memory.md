@@ -69,7 +69,7 @@
 | T3 | `bd20bfc` | — | 前端 ConnectionTestDialog + SecretInput |
 | T4 | `330f5f0` | `6cb9671`（card 点击 UX + dev 页 sanitize） | 前端 setup 页重写 |
 | T5 | `4e48cab` | `7affb77`（hydration mismatch fix） | 前端语音输入 |
-| T6 | `a53a5e4` | `<待填>` | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
+| T6 | `a53a5e4` | `e9e2786` | ConfigSwitcher + BYOK self-check + dev 页清理 + ship |
 
 **T6 fixup（用户 e2e 反馈后修补）**：
 - **缺「→ 上传简历」入口**：v1.1 setup 页砍掉了 v1.0 「保存后自动跳 next」的逻辑（让用户能连续编辑多组 config 不被打断），但忘了补手动跳转入口，用户保存完 config 后没办法干净地走出 /setup。修法：
