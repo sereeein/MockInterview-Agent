@@ -21,6 +21,56 @@
 
 <!-- 最新记录追加在这条注释下方 -->
 
+## 2026-04-29 · v1.1 T5 — 前端语音输入（speech.ts + VoiceInput + drill/mock 集成）
+
+**任务**：v1.1 T5，给单题演练 / 模拟面试的回答 textarea 加 STT 语音输入按钮。BYOK 不破坏——音频从不进后端，浏览器原生 Web Speech API 直接调浏览器/OS 自带 STT 服务
+
+**设计文档**：[`docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md`](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md) §3 + §5 T5
+
+**做了什么**：
+- 新建 `frontend/src/lib/speech.ts`：薄包装 Web Speech API
+  - `detectSpeechSupport()` 三档检测：SSR / not-secure-context (HTTP) / no-api (Firefox) → 返回 supported=false 时 VoiceInput 直接不渲染
+  - `createRecognizer({lang, onFinal, onInterim, onError, onEnd})`：continuous=true（用户停顿不自动断）+ interimResults=true（实时显示）
+  - `friendlyErrorMessage(code)`：映射 Web Speech 错误码到中文友好提示，`no-speech` / `aborted` 静默不显示
+- 新建 `frontend/src/components/voice-input.tsx`：
+  - 三态机 idle / recording / stopping
+  - Idle：灰色 🎙 (Mic 图标)；Recording：红色 ◼ (Square 图标) + animate-pulse；点击切换
+  - **interim 增量管理**：用 `interimRef` 追踪当前 pending 文字。每次 onInterim 先剥离前一次 pending 后缀，再拼新 pending。停止时 / onEnd 时自动剥离未 finalize 的 interim
+  - 错误提示：上浮 tooltip（absolute right-0 bottom-full）3 秒淡出
+  - **不渲染按钮**当 detectSpeechSupport 返回 false（Firefox + HTTP context）
+- 修改 `frontend/src/app/drill/[id]/page.tsx`：textarea 包 `relative` div + `<VoiceInput>` 浮 right-2 bottom-2 + textarea pr-12 让出按钮空间
+- 修改 `frontend/src/app/mock/[id]/page.tsx`：同上
+- 新建 `frontend/src/app/dev/voice-input/page.tsx`：dev showcase 页（绕过 resume→drill 完整流程直接验语音功能 + 浏览器能力检测 + 当前 speechLang 显示）。**T6 可删**
+
+**关键决策**：
+- **interim 文字不做浅灰染色**：`<Textarea>` 是纯文本 element，不能在内部加 span 染色。要做染色需重写为 contentEditable，工程量翻倍。v1.1 决定 trade-off：interim 段以普通色拼到末尾，靠红色脉冲麦克风按钮 + 实时文字流动作为视觉反馈。**v1.2 候选**改 contentEditable 实现染色
+- **不做静默自动停止**：spec §3.3 已明确不引入 silence detection。依赖用户手动点停止 / Web Speech API 自身的 onend（Chrome 约 60s 静默自断）
+- **不做 textarea 失焦 30s 自动停**：实现需要捕获 textarea ref 但 VoiceInput 是兄弟节点，无 ref 关系。延后到 v1.2，依赖手动停止 + onend 兜底
+- **错误 tooltip 上浮而非内联红字**：内联会推开 textarea 改变 layout；浮在按钮上方稳定
+- **「点击切换」（toggle）而非「按住说话」**：spec §3.3 + 用户 Q3 选项 1 已确认
+- **lang 实时读 getUiPrefs()**：用户在 /setup 改语言后，下次启动 recognizer 立即生效（不需要刷新页）
+
+**改动的文件**：
+- New: `frontend/src/lib/speech.ts`
+- New: `frontend/src/components/voice-input.tsx`
+- New: `frontend/src/app/dev/voice-input/page.tsx`（T6 可删）
+- Modified: `frontend/src/app/drill/[id]/page.tsx`（textarea 包 relative + 嵌入 VoiceInput）
+- Modified: `frontend/src/app/mock/[id]/page.tsx`（同上）
+
+**验证方式**：
+- `cd frontend && npx tsc --noEmit` → exit 0
+- `curl /drill/1` → HTTP 200 / 15191 bytes（loading 状态，VoiceInput SSR 返回 null）
+- `curl /mock/1` → HTTP 200 / 15181 bytes
+- `curl /dev/voice-input` → HTTP 200 / 17472 bytes，所有 anchor 字符串 SSR 渲染
+- **建议手测**（用户 Chrome macOS）：打开 [/dev/voice-input](http://localhost:3000/dev/voice-input) → 「检测当前浏览器支持情况」按钮 → 看到「✓ 支持」→ textarea 右下角点 🎙 → 允许麦克风 → 说话 → 看 textarea 实时出文字 → 点 ◼ 停止 → 文字保留
+  - 也可去 [/dev/voice-input](http://localhost:3000/dev/voice-input) 切到 Firefox 验证按钮**完全不渲染**
+
+**Commit hash**: 待填
+
+**下一步**：等用户确认 → T6 顶部切换器 + BYOK self-check 文档 + e2e 验证 + memory.md 收尾 + git tag v1.1
+
+---
+
 ## 2026-04-29 · v1.1 T4 — 前端 setup 页大改：左右栏 + 多 config 卡片 + 导入导出
 
 **任务**：v1.1 T4，把 v1.0 的单 config setup 页重写成多 config 管理界面，集成 T3 的 ConnectionTestDialog + SecretInput

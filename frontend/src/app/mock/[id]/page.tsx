@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatInterface } from "@/components/chat-interface";
+import { VoiceInput } from "@/components/voice-input";
 import { answerDrill, getMock, startDrill } from "@/lib/api";
 import type { DrillResponse, MockSession } from "@/lib/types";
 
@@ -68,13 +69,23 @@ export default function MockPage({ params }: { params: Promise<{ id: string }> }
       {drill ? (
         <>
           <ChatInterface transcript={drill.transcript} />
-          <Textarea
-            rows={4}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={busy || drill.status === "ended"}
-            placeholder="作答……"
-          />
+          <div className="relative">
+            <Textarea
+              rows={4}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={busy || drill.status === "ended"}
+              placeholder="作答……"
+              className="pr-12"
+            />
+            <div className="absolute right-2 bottom-2">
+              <VoiceInput
+                value={input}
+                onChange={setInput}
+                disabled={busy || drill.status === "ended"}
+              />
+            </div>
+          </div>
           <Button onClick={send} disabled={busy || drill.status === "ended"}>
             {busy ? "评估中…" : "发送"}
           </Button>

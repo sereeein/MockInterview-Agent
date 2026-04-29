@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatInterface } from "@/components/chat-interface";
+import { VoiceInput } from "@/components/voice-input";
 import { answerDrill, startDrill } from "@/lib/api";
 import type { DrillResponse } from "@/lib/types";
 
@@ -43,13 +44,23 @@ export default function DrillPage({ params }: { params: Promise<{ id: string }> 
       <h1 className="text-lg font-bold">单题演练</h1>
       <ChatInterface transcript={drill.transcript} />
       <div className="space-y-2">
-        <Textarea
-          rows={4}
-          placeholder="作答……（可输入 跳过 / 我答完了 / 没思路 / 换个例子）"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={busy || drill.status === "ended"}
-        />
+        <div className="relative">
+          <Textarea
+            rows={4}
+            placeholder="作答……（可输入 跳过 / 我答完了 / 没思路 / 换个例子）"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={busy || drill.status === "ended"}
+            className="pr-12"
+          />
+          <div className="absolute right-2 bottom-2">
+            <VoiceInput
+              value={input}
+              onChange={setInput}
+              disabled={busy || drill.status === "ended"}
+            />
+          </div>
+        </div>
         <div className="flex gap-2 justify-between">
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setInput("跳过")}>跳过</Button>
