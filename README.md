@@ -4,9 +4,17 @@
 
 **Live**: https://mockinterview-agent.vercel.app
 **Backend API**: https://mockinterview-backend-production.up.railway.app（Swagger 在 `/docs`）
-**Repo**: https://github.com/sereeein/MockInterview-Agent · **Release**: [v1.0](https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.0)
+**Repo**: https://github.com/sereeein/MockInterview-Agent · **Releases**: [v1.0](https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.0) · [v1.1](https://github.com/sereeein/MockInterview-Agent/releases/tag/v1.1)
 
-> Status: **v1.0 shipped** (4 周 1 人独立交付 · 63 unit tests · 出题相关性 2.94/3 · 追问命中率 100%)
+> Status: **v1.1 shipped** (88 unit tests · 出题相关性 2.94/3 · 追问命中率 100% · 多组配置 · 连接测试 · 语音输入)
+
+## v1.1（2026-04-29）— BYOK UX 进化
+v1.1 在 v1.0 的「服务器零持有 key」硬约束下，让 BYOK 体验从「能用」升级到「称手」：
+- **多组配置保存与切换**：每个用户可保存多组命名 provider config（含 ⭐ 默认标记），顶部 dropdown 一键切换；导出/导入 JSON 防 localStorage 丢失
+- **连接测试**：最小 token 验证 provider+model+key 可用 + JSON 输出能力；5 类错误精确分类（network / auth / rate_limit / json_format / unknown），带 HTTP status + provider 原始 message + 中性建议文案
+- **语音输入**：单题演练 + 模拟面试 textarea 右下角 🎙 按钮，浏览器原生 Web Speech API（zh-CN/zh-TW/en-US 可切），不支持的浏览器（Firefox / 非 HTTPS）按钮自动不渲染（优雅降级）
+
+详见 [v1.1 设计文档](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md)。
 
 ## What it does
 - 上传简历 PDF + 选岗位（PM / 数据 / AI / 其他）+ 可选 JD
@@ -69,11 +77,12 @@ pnpm dev
 
 ## Project journey
 - 立项策略: [`PROJECT.md`](PROJECT.md)
-- v1 设计文档: [`docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md`](docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md)
-- 4 周实施 plan（~50 task）: [`plans/2026-04-27-mock-interview-agent-v1.md`](plans/2026-04-27-mock-interview-agent-v1.md)
+- v1.0 设计文档: [`docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md`](docs/superpowers/specs/2026-04-27-mock-interview-agent-v1-design.md)
+- v1.1 设计文档: [`docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md`](docs/superpowers/specs/2026-04-29-mock-interview-agent-v1.1-design.md)
+- v1.0 实施 plan（~50 task）: [`plans/2026-04-27-mock-interview-agent-v1.md`](plans/2026-04-27-mock-interview-agent-v1.md)
 - 完整开发日志: [`memory.md`](memory.md)
 - **6 层学习指南**（面试 defense 用）: [`docs/learning-guide.md`](docs/learning-guide.md)
-- BYOK 架构说明: [`docs/byok.md`](docs/byok.md)
+- BYOK 架构说明 + v1.1 self-check: [`docs/byok.md`](docs/byok.md)
 - 简历金句: [`docs/resume-bullets.md`](docs/resume-bullets.md)
 - 部署 + 评估手册: [`docs/deployment.md`](docs/deployment.md)
 - 小红书 4 周冷启动模板: [`docs/xiaohongshu/`](docs/xiaohongshu/)
