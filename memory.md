@@ -78,7 +78,7 @@
 
 **总成本对账**：~$9 LLM cost（Anthropic ~$8 含两次充值消耗 + DeepSeek ~$1.20）。详见 [docs/eval-harness-status-2026-05-02.md](docs/eval-harness-status-2026-05-02.md) "总成本对账" section。
 
-**Commit hash**：未 commit（Phase 0+1+2+3 整体作为一个里程碑，下次 session 启动后请示用户一起 commit）
+**Commit hash**：`49513f5`（Phase 0+1+2+3 整体里程碑，单 commit；18 files changed, 2685 insertions, 44 deletions）
 
 ---
 
@@ -166,7 +166,7 @@ cd backend && env -u VIRTUAL_ENV PYTHONPATH=.. MOCK_PROVIDER=deepseek \
 
 **下一步（Phase 3）**：等 background tasks 完成（`bxc4qkxii` main + `b03r1nicf` regression）→ 写 `eval/diagnostics/A_validation_<date>.md` → 🚦 流程门 2 决定精简 C / 完整 C。
 
-**Commit hash**：未 commit（Phase 0+1+2 整体作为一个里程碑，等 Phase 3 数据出来后一起评估）
+**Commit hash**：`49513f5`（Phase 0+1+2+3 合并到同一个里程碑 commit）
 
 ---
 
@@ -234,7 +234,7 @@ cd backend && env -u VIRTUAL_ENV PYTHONPATH=.. uv run python -m eval.harness.cli
 
 **下一步（Phase 1）**：跑 N=10 在 `other_no_jd` + `pm_alpha_self` 上测真实失败率 → significance.py 算 80% power 所需 N → 🚦 **流程门 1：等用户 review N 值后再进 Phase 2**。
 
-**Commit hash**：未 commit（Phase 0 未结时不动 git，等 Phase 1 数据出来后一起评估是否 commit）
+**Commit hash**：`49513f5`（Phase 0+1+2+3 合并到同一个里程碑 commit）
 
 ---
 
