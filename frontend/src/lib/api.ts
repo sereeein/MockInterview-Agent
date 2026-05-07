@@ -50,6 +50,20 @@ function redirectToSetupOnAuthFailure(status: number): void {
   }
 }
 
+async function readErrorBody(r: Response): Promise<unknown> {
+  // Response.body is a one-shot stream — calling .json() then .text() (or vice
+  // versa) on the same Response throws "body stream already read". Read raw text
+  // once, then attempt JSON.parse; fall back to the raw string if parse fails.
+  // Handles non-JSON 4xx/5xx (HTML error pages from proxies, plain-text 401 from
+  // bare middleware, empty bodies) without losing the original payload.
+  const text = await r.text().catch(() => "");
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 async function jsonRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...(isJsonBody(init?.body) ? { "Content-Type": "application/json" } : {}),
@@ -58,12 +72,7 @@ async function jsonRequest<T>(path: string, init?: RequestInit): Promise<T> {
   };
   const r = await fetch(`${BASE}${path}`, { ...init, headers });
   if (!r.ok) {
-    let body: unknown;
-    try {
-      body = await r.json();
-    } catch {
-      body = await r.text();
-    }
+    const body = await readErrorBody(r);
     redirectToSetupOnAuthFailure(r.status);
     throw new ApiError(r.status, body);
   }
@@ -95,12 +104,7 @@ export async function uploadResume(
     headers: providerHeaders(),
   });
   if (!r.ok) {
-    let body: unknown;
-    try {
-      body = await r.json();
-    } catch {
-      body = await r.text();
-    }
+    const body = await readErrorBody(r);
     redirectToSetupOnAuthFailure(r.status);
     throw new ApiError(r.status, body);
   }
